@@ -68,6 +68,12 @@ resource "azurerm_postgresql_flexible_server" "ekai-db" {
   lifecycle {
     ignore_changes = [zone]
   }
+
+  # private_dns_zone_id above only references the zone itself -- Terraform
+  # has no implicit edge to the zone's VNet link, but Azure needs that link
+  # to already exist when it starts provisioning a delegated-subnet server,
+  # documented azurerm provider gotcha (intermittent failure without it).
+  depends_on = [azurerm_private_dns_zone_virtual_network_link.ekai]
 }
 resource "azurerm_postgresql_flexible_server_database" "ekai-database" {
   name      = var.backend_db_name

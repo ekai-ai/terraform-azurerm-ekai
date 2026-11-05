@@ -57,21 +57,15 @@ up against), then in `examples/self-deploy/root/`.
 
 ## Using this as a Terraform Registry module
 
-The repo root and `cicd/` are structured as ordinary Terraform modules, so
-once this repo is connected to the Terraform Registry (a one-time manual
-step someone with access to the registry/repo settings has to do — publish
-the repo, then push a semver tag; **this does not work until that's been
-done**), you can consume them directly instead of using
-`examples/self-deploy/`. **A correct publish needs a fresh tag pushed now
-that the repo is renamed** — the Registry derives a module's provider
-strictly from the repo name (`terraform-<PROVIDER>-<NAME>`, no manual
-override in the publish flow); this repo was originally named
-`terraform-azure-ekai` and auto-published under the nonexistent provider
-`azure` as a result (live but unusable at
-[registry.terraform.io/modules/ekai-ai/ekai/azure](https://registry.terraform.io/modules/ekai-ai/ekai/azure)).
-Now renamed to `terraform-azurerm-ekai`, so a new tag will publish
-correctly as `azurerm` — the stale `azure` listing won't migrate on its
-own and should be unpublished separately:
+The repo root and `cicd/` are structured as ordinary Terraform modules, and
+this repo is already connected to the Terraform Registry:
+[registry.terraform.io/modules/ekai-ai/ekai/azurerm](https://registry.terraform.io/modules/ekai-ai/ekai/azurerm).
+**The published version can lag behind `main`** — publishing a new one
+needs a new semver tag pushed (`git tag vX.Y.Z && git push origin vX.Y.Z`),
+a separate manual step from merging to `main`; check the Registry page's
+"Published" date/version against this repo's own commit history before
+assuming it's current. You can consume it directly instead of using
+`examples/self-deploy/`:
 
 ```hcl
 module "infra" {

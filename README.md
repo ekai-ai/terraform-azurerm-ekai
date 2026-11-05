@@ -65,8 +65,8 @@ one.
 
 `self-deploy.sh` registers the required Azure resource providers, creates
 the resource group, creates the scoped deployer Service Principal Terraform
-needs, initializes the Terraform state backend, then runs both
-`terraform apply`s for you after one confirmation (it creates real, billable
+needs, initializes the Terraform state backend, then runs both `terraform
+apply` commands for you after one confirmation (it creates real, billable
 Azure resources).
 
 ## After a successful deploy
@@ -203,18 +203,12 @@ in the error) from whichever directory the error came from.
 
 ## Using this as a Terraform Registry module
 
-**Not usably published yet.** The Terraform Registry derives a module's
-provider name strictly from its GitHub repo name
-(`terraform-<PROVIDER>-<NAME>`, no manual override in the publish flow).
-This repo was originally named `terraform-azure-ekai` and got auto-published
-under the nonexistent provider `azure` (not `azurerm`, the real Terraform
-provider) as a result — that stale listing is live at
-[registry.terraform.io/modules/ekai-ai/ekai/azure](https://registry.terraform.io/modules/ekai-ai/ekai/azure)
-but unusable, since nothing can actually reference provider `azure`. The
-repo has since been renamed to `terraform-azurerm-ekai` to fix this going
-forward, but a fresh tag push is still needed to get a correctly-provider-named
-`ekai-ai/ekai/azurerm` listing published — the old `azure` one won't migrate
-on its own and should be unpublished once the new one exists.
+Already published:
+[registry.terraform.io/modules/ekai-ai/ekai/azurerm](https://registry.terraform.io/modules/ekai-ai/ekai/azurerm).
+**The published version can lag behind `main`** — publishing a new one
+needs its own semver tag pushed, a separate step from merging to `main`;
+check the Registry page's version/date against this repo's own commit
+history before assuming it's current.
 
 ```hcl
 module "infra" {

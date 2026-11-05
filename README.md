@@ -6,7 +6,7 @@ ArgoCD, and the `ekai-saas` Helm chart — everything needed for a working Ekai
 install.
 
 For how this repo is structured internally (why there are 2 Terraform
-applies, the module layout), see [ARCHITECTURE.md](ARCHITECTURE.md). This
+applies, the module layout), see [ARCHITECTURE.md](https://github.com/ekai-ai/terraform-azurerm-ekai/blob/main/ARCHITECTURE.md). This
 doc only covers deploying it. Prefer consuming it directly as a module
 instead of `self-deploy.sh`? See
 [Using this as a Terraform Registry module](#using-this-as-a-terraform-registry-module)
@@ -15,7 +15,7 @@ below.
 ## Prerequisites
 
 - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli),
-  authenticated (`az login`) — see [PERMISSIONS.md](PERMISSIONS.md) for
+  authenticated (`az login`) — see [PERMISSIONS.md](https://github.com/ekai-ai/terraform-azurerm-ekai/blob/main/PERMISSIONS.md) for
   exactly what this identity needs
 - [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.7
 - `kubectl`, `jq`, `dig`
@@ -49,7 +49,7 @@ inline comment; worth a second look before your first deploy:
 | `dns_zone` | Domain this deploys under (`portal.<dns_zone>`, `argocd.<dns_zone>`, ...) |
 | `acme_email` | Email for Let's Encrypt certificate notifications — cert-manager's ACME account registration fails without a real one |
 
-Full reference (every variable, every default): [ARCHITECTURE.md](ARCHITECTURE.md),
+Full reference (every variable, every default): [ARCHITECTURE.md](https://github.com/ekai-ai/terraform-azurerm-ekai/blob/main/ARCHITECTURE.md),
 `variables.tf` and `cicd/variables.tf`.
 
 ```bash
@@ -129,7 +129,7 @@ existing (empty) soft-deleted vault automatically. If you need the vault
 name free again sooner (e.g. a fast destroy/reapply test loop), set
 `purge_vault_on_destroy = true` in that env's tfvars before destroying — see
 the variable's description in `variables.tf` and
-[PERMISSIONS.md](PERMISSIONS.md) for the extra subscription-scoped role this
+[PERMISSIONS.md](https://github.com/ekai-ai/terraform-azurerm-ekai/blob/main/PERMISSIONS.md) for the extra subscription-scoped role this
 requires. Not something to ask a real customer to grant.
 
 ## Troubleshooting
@@ -240,5 +240,5 @@ module "cicd" {
 }
 ```
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for why this is 2 separate applies
+See [ARCHITECTURE.md](https://github.com/ekai-ai/terraform-azurerm-ekai/blob/main/ARCHITECTURE.md) for why this is 2 separate applies
 and the full module layout.

@@ -1,6 +1,6 @@
 # Architecture
 
-For how to actually deploy this, see [README.md](README.md). This doc
+For how to actually deploy this, see [README.md](https://github.com/ekai-ai/terraform-azurerm-ekai/blob/main/README.md). This doc
 covers how the repo is structured and why, for anyone modifying it or
 consuming it a different way than `self-deploy.sh`.
 
@@ -181,7 +181,7 @@ otherwise permissive.
   `purge_vault_on_destroy` (default `false`) keeps the deployer SP's
   footprint to resource-group `Owner` only; opting in grants one narrow
   custom role at subscription scope instead of a broad built-in one — see
-  [PERMISSIONS.md](PERMISSIONS.md).
+  [PERMISSIONS.md](https://github.com/ekai-ai/terraform-azurerm-ekai/blob/main/PERMISSIONS.md).
 
 ## Scope
 
@@ -215,7 +215,7 @@ files identically.
 | `key_vault_name` | `null` → derived, truncated to 24 chars | Key Vault name — globally unique within Azure |
 | `tls_name` | `null` → `"<env_name>-ekai-wildcard-tls"` | K8s Secret name holding the wildcard TLS cert |
 | `rbac_principal_ids` | `[]` | Extra object IDs granted Key Vault Secrets Officer + DNS Zone Contributor (e.g. break-glass admin access) |
-| `purge_vault_on_destroy` | `false` | See [PERMISSIONS.md](PERMISSIONS.md) — leave `false` for real customers |
+| `purge_vault_on_destroy` | `false` | See [PERMISSIONS.md](https://github.com/ekai-ai/terraform-azurerm-ekai/blob/main/PERMISSIONS.md) — leave `false` for real customers |
 
 ### Networking / AKS
 

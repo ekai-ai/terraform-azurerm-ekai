@@ -62,7 +62,12 @@ once this repo is connected to the Terraform Registry (a one-time manual
 step someone with access to the registry/repo settings has to do — publish
 the repo, then push a semver tag; **this does not work until that's been
 done**), you can consume them directly instead of using
-`examples/self-deploy/`:
+`examples/self-deploy/`. **That first step needs this repo renamed to
+`terraform-azurerm-ekai` beforehand** — the Registry derives a module's
+provider strictly from the repo name (`terraform-<PROVIDER>-<NAME>`, no
+manual override in the publish flow), and the real Terraform provider is
+`azurerm`, not `azure`; publishing as `terraform-azure-ekai` registers
+under the nonexistent provider `azure` instead:
 
 ```hcl
 module "infra" {

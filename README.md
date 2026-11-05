@@ -7,7 +7,10 @@ install.
 
 For how this repo is structured internally (why there are 2 Terraform
 applies, the module layout), see [ARCHITECTURE.md](ARCHITECTURE.md). This
-doc only covers deploying it.
+doc only covers deploying it. Prefer consuming it directly as a module
+instead of `self-deploy.sh`? See
+[Using this as a Terraform Registry module](#using-this-as-a-terraform-registry-module)
+below.
 
 ## Prerequisites
 
@@ -197,3 +200,44 @@ in the error) from whichever directory the error came from.
 
 **Lost `env/<name>.tfvars`** — see `./scripts/recover-tfvars.sh` under
 [Tearing down](#tearing-down).
+
+## Using this as a Terraform Registry module
+
+**Not published yet, and blocked on a rename first.** The Terraform
+Registry derives a module's provider name strictly from its GitHub repo
+name (`terraform-<PROVIDER>-<NAME>`, no manual override in the publish
+flow) — this repo is named `terraform-azure-ekai`, but the real Terraform
+provider is `azurerm`, not `azure`. Publishing as-is would register under
+the nonexistent provider `azure`, not `azurerm`, making it unusable. This
+repo needs to be renamed to `terraform-azurerm-ekai` *before* connecting
+it to the Registry (a separate one-time manual step after that: sign in to
+[registry.terraform.io](https://registry.terraform.io) with the `ekai-ai`
+org's GitHub account, then publish this repo through the UI). Nothing
+below works until both have happened.
+
+```hcl
+module "infra" {
+  source  = "registry.terraform.io/ekai-ai/ekai/azurerm"
+  version = "~> 0.1"
+
+  subscription_id = "00000000-0000-0000-0000-000000000000"
+  region          = "northeurope"
+  env_name        = "acme"
+  # ...every variable in variables.tf
+}
+
+module "cicd" {
+  source  = "registry.terraform.io/ekai-ai/ekai/azurerm//cicd"
+  version = "~> 0.1"
+  # ...every variable in cicd/variables.tf, plus the values module.infra
+  # exports that cicd needs (see examples/self-deploy/cicd/main.tf for
+  # exactly which — with a registry module you'd normally wire these with
+  # module.infra.X directly if both modules live in the same config, instead
+  # of examples/self-deploy's terraform_remote_state indirection, which only
+  # exists because self-deploy.sh's 2-apply split needs an actual state
+  # boundary between them)
+}
+```
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for why this is 2 separate applies
+and the full module layout.

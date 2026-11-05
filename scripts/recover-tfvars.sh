@@ -29,6 +29,10 @@
 # ──────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
+for bin in az python3; do
+  command -v "$bin" >/dev/null 2>&1 || { echo "ERROR: '$bin' is required but not installed."; exit 1; }
+done
+
 ENV="${1:?Usage: $0 <ENV> <REGION>}"
 REGION="${2:?Usage: $0 <ENV> <REGION>}"
 

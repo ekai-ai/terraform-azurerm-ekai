@@ -35,7 +35,8 @@
 # Each destructive stage has its own confirmation — say no to any of them and
 # the rest still runs. Safe to re-run if it fails partway.
 #
-# Requires: az, terraform, jq, dig.
+# Requires: az, terraform, jq, dig, python3 (the last only if env/<ENV>.tfvars
+# needs recovering via recover-tfvars.sh).
 # ──────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
@@ -48,6 +49,13 @@ if [[ $# -lt 1 ]]; then
 fi
 ENV="$1"
 TFVARS="${REPO_ROOT}/env/${ENV}.tfvars"
+
+# Checked before the recovery block below, not after -- recover-tfvars.sh
+# (which this script may call next) needs python3 on top of this script's
+# own az/terraform/jq/dig, so this has to cover both before either runs.
+for bin in az terraform jq dig python3; do
+  command -v "$bin" >/dev/null 2>&1 || { echo "ERROR: '$bin' is required but not installed."; exit 1; }
+done
 
 if [[ ! -f "${TFVARS}" ]]; then
   echo "==> ${TFVARS} not found -- attempting to recover it from Terraform state."
@@ -67,10 +75,6 @@ if [[ ! -f "${TFVARS}" ]]; then
   echo "  proceeding anyway since this is a destroy, not an apply."
   echo
 fi
-
-for bin in az terraform jq dig; do
-  command -v "$bin" >/dev/null 2>&1 || { echo "ERROR: '$bin' is required but not installed."; exit 1; }
-done
 
 SUBSCRIPTION_ID=$(grep -E '^subscription_id[[:space:]]*=' "${TFVARS}" | head -1 | sed 's/.*=[[:space:]]*"\(.*\)".*/\1/')
 REGION=$(grep -E '^region[[:space:]]*=' "${TFVARS}" | head -1 | sed 's/.*=[[:space:]]*"\(.*\)".*/\1/')
@@ -141,9 +145,26 @@ echo "✓ Terraform infrastructure destroyed for env=${ENV}."
 echo
 read -rp "Also delete the resource group ${RESOURCE_GROUP_NAME} (tfstate storage account included)? [y/N] " CLEAN_RG </dev/tty
 if [[ "${CLEAN_RG}" =~ ^[Yy]$ ]]; then
-  echo "==> Deleting ${RESOURCE_GROUP_NAME} (async — Azure processes this in the background)..."
+  echo "==> Deleting ${RESOURCE_GROUP_NAME}..."
   az group delete --name "${RESOURCE_GROUP_NAME}" --yes --no-wait
-  echo "  Deletion started. Check status: az group show --name ${RESOURCE_GROUP_NAME}"
+  # Poll instead of returning right away -- a same-day redeploy of this env
+  # name re-runs self-deploy.sh's own `az group create`/`az group show`
+  # against this exact resource group, which fails or silently no-ops
+  # against one Azure still has mid-delete (provisioningState: Deleting) if
+  # we return here before it's actually gone.
+  echo "  Waiting for deletion to finish (can take several minutes for a full AKS + networking + Postgres env)..."
+  for i in $(seq 1 60); do
+    if [[ "$(az group exists --name "${RESOURCE_GROUP_NAME}")" == "false" ]]; then
+      echo "  ✓ ${RESOURCE_GROUP_NAME} deleted."
+      break
+    fi
+    sleep 15
+  done
+  if [[ "$(az group exists --name "${RESOURCE_GROUP_NAME}")" == "true" ]]; then
+    echo "  ⚠ Still deleting after 15 minutes -- Azure is still processing it in the"
+    echo "    background. Check status: az group show --name ${RESOURCE_GROUP_NAME}"
+    echo "    Wait for it to finish before re-running self-deploy.sh with this env name."
+  fi
 else
   echo "Skipped — the env name (${ENV}) is not reusable until this is run, since the state storage account still exists."
 fi

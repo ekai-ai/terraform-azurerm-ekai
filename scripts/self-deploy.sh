@@ -158,14 +158,29 @@ for PROVIDER in "${REQUIRED_PROVIDERS[@]}"; do
   fi
 done
 echo "==> Waiting for registration to complete..."
+UNREGISTERED_PROVIDERS=()
 for PROVIDER in "${REQUIRED_PROVIDERS[@]}"; do
+  REGISTERED=0
   for i in $(seq 1 20); do
     STATE=$(az provider show --namespace "${PROVIDER}" --query registrationState -o tsv 2>/dev/null || echo "NotRegistered")
-    [[ "${STATE}" == "Registered" ]] && break
+    if [[ "${STATE}" == "Registered" ]]; then
+      REGISTERED=1
+      break
+    fi
     sleep 5
   done
+  [[ "${REGISTERED}" -eq 0 ]] && UNREGISTERED_PROVIDERS+=("${PROVIDER}")
 done
-echo "✓ Resource providers registered."
+if [[ ${#UNREGISTERED_PROVIDERS[@]} -eq 0 ]]; then
+  echo "✓ Resource providers registered."
+else
+  echo "⚠ Still not registered after 100s: ${UNREGISTERED_PROVIDERS[*]}"
+  echo "  Registration is still processing in the background -- check with:"
+  echo "    az provider show --namespace <name> --query registrationState -o tsv"
+  echo "  Proceeding anyway; the upcoming terraform apply may fail against"
+  echo "  whichever of these isn't actually ready yet. Safe to just re-run"
+  echo "  this script if that happens."
+fi
 echo
 
 # ── Step 2 — Resource group ───────────────────────────────────────────────────
@@ -369,15 +384,23 @@ restore_subscription_and_warn() {
 trap restore_subscription_and_warn EXIT
 
 echo "==> Waiting for the new credential to propagate..."
+CREDENTIAL_PROPAGATED=0
 for i in $(seq 1 20); do
   if ARM_CLIENT_ID="${APP_ID}" ARM_CLIENT_SECRET="${CLIENT_SECRET}" ARM_TENANT_ID="${TENANT_ID}" ARM_SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" \
      az login --service-principal -u "${APP_ID}" -p "${CLIENT_SECRET}" --tenant "${TENANT_ID}" >/dev/null 2>&1; then
     echo "✓ Credential is active."
     az account set --subscription "${SUBSCRIPTION_ID}"
+    CREDENTIAL_PROPAGATED=1
     break
   fi
   sleep 5
 done
+if [[ "${CREDENTIAL_PROPAGATED}" -eq 0 ]]; then
+  echo "⚠ Credential still not accepted after 100s -- proceeding anyway, but"
+  echo "  the upcoming terraform apply may fail authenticating as the deployer"
+  echo "  SP if it's genuinely not propagated yet. Safe to just re-run this"
+  echo "  script if that happens."
+fi
 
 # 2 applies, in order: bootstrap+cluster+platform first (its state feeds
 # cicd's terraform_remote_state read — see cicd/main.tf's file header for why

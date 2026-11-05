@@ -82,7 +82,6 @@ module "cluster" {
   cluster_version                     = var.cluster_version
   sku_tier                            = var.sku_tier
   zones                               = var.zones
-  node_count                          = var.node_count
   vm_size                             = var.vm_size
   system_node_pool_min_count          = var.system_node_pool_min_count
   system_node_pool_max_count          = var.system_node_pool_max_count

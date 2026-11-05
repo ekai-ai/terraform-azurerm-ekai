@@ -7,8 +7,16 @@
 #   - Layer 03 (platform) Helm releases can reference ACR-mirrored images
 # ──────────────────────────────────────────────────────────────────────────
 
+# ACR names are globally unique across every Azure subscription, not just
+# this one (unlike Key Vault's own subscription_id-suffixed name, this had
+# no such suffix -- two different customers picking the same env_name
+# collide). Same fix as Key Vault's name (main.tf's local.key_vault_name):
+# fold in the subscription ID, stripped of hyphens since ACR names are
+# alphanumeric-only (no hyphens/underscores at all, unlike Key Vault).
+data "azurerm_client_config" "current" {}
+
 resource "azurerm_container_registry" "acr" {
-  name                = "ekai${var.env_name}acr"
+  name                = substr("ekai${var.env_name}${substr(replace(data.azurerm_client_config.current.subscription_id, "-", ""), 0, 8)}acr", 0, 50)
   resource_group_name = var.resource_group_name
   location            = var.region
   sku                 = "Standard"

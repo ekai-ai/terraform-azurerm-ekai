@@ -44,6 +44,11 @@ variable "region" {
 variable "env_name" {
   description = "Environment slug (e.g. client1, qa, prod). Used in resource names and tags."
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-z0-9]+$", var.env_name))
+    error_message = "env_name must be lowercase letters and numbers only -- it's baked into the ACR name (alphanumeric only, no hyphens/underscores) and the Terraform state storage account name (lowercase alphanumeric only) via scripts/init-state-backend.sh."
+  }
 }
 
 variable "resource_group_name" {
@@ -177,10 +182,6 @@ variable "zones" {
   default     = ["1", "2", "3"]
 }
 
-variable "node_count" {
-  type = number
-}
-
 variable "vm_size" {
   type = string
 }
@@ -284,6 +285,11 @@ variable "argocd_admin_password_hashed" {
 variable "acme_email" {
   description = "Email address registered with Let's Encrypt for certificate expiry notifications."
   type        = string
+
+  validation {
+    condition     = var.acme_email != "" && var.acme_email != "REPLACE_ME" && can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", var.acme_email))
+    error_message = "acme_email must be a real email address -- got empty, the literal placeholder \"REPLACE_ME\", or something that doesn't look like an email."
+  }
 }
 
 variable "cluster_issuer_name" {

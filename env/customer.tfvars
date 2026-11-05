@@ -51,7 +51,6 @@ pri_sub_3_cidr   = "10.0.16.0/22"
 
 cluster_name    = "ekai-saas-aks-customer"
 cluster_version = "1.34.1"
-node_count      = 4
 vm_size         = "Standard_B2ms"
 
 # zones defaults to ["1", "2", "3"] (all node pools spread across all three)
@@ -64,6 +63,17 @@ system_node_pool_max_count = 3
 # VM SKU + scaling for the app (user) node pool where all workloads run.
 # Needs enough CPU/memory for the whole app stack (backend/frontend/erd/
 # workers/semantics/profile) plus Redis and cluster addons.
+#
+# Check your subscription's vCPU quota BEFORE the first apply, not after it
+# fails partway through: steady state alone already needs 10 vCPUs --
+# system_node_pool_min_count (1) x Standard_B2ms (2 vCPU) + app_node_pool_min_count
+# (2) x Standard_B4ms (4 vCPU) -- and AKS node-image upgrades temporarily run
+# extra nodes on top of that (upgrade_settings.max_surge in modules/aks/main.tf),
+# so budget noticeably more than 10. A fresh/trial subscription's default
+# "Total Regional vCPUs" quota is commonly as low as ~10 -- request an
+# increase in the Azure Portal (Service Quotas) well before deploying; it's
+# usually auto-approved within minutes. See the README's Troubleshooting
+# section if you hit InsufficientVCPUQuota mid-apply instead.
 app_vm_size             = "Standard_B4ms"
 app_node_pool_min_count = 2
 app_node_pool_max_count = 6
@@ -109,7 +119,10 @@ argocd_namespace = "argocd"
 # override it to "letsencrypt-staging" in a throwaway test env's own tfvars,
 # to avoid burning the production rate limit (5 duplicate certs/week per
 # domain) across repeated apply/destroy cycles.
-acme_email = "devops@ekai.ai"
+# REPLACE_ME is not a usable address -- it's a loud placeholder, not a
+# stand-in Terraform will silently accept. Set this to a real address before
+# applying (Terraform's own validation rejects REPLACE_ME/empty/malformed).
+acme_email = "REPLACE_ME"
 
 # minio_persistence_size default (50Gi) x minio_replicas default (4) = 200Gi
 # total provisioned storage.

@@ -65,10 +65,6 @@ variable "zones" {
   default     = ["1", "2", "3"]
 }
 
-variable "node_count" {
-  type = number
-}
-
 variable "vm_size" {
   type = string
 }

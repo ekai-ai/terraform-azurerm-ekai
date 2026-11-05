@@ -87,7 +87,8 @@ resource "azurerm_kubernetes_cluster" "aks" {
 
   # Azure File CSI driver -- ERD's shared workspace (erd/erd-worker/
   # document-worker/profile-worker) is backed by an azurefile-csi
-  # ReadWriteMany PVC (see terraform-azure-ekai's cicd module's
+  # ReadWriteMany PVC (the ekai-saas chart's "azureFile" workspace type,
+  # >= chart 0.1.16 -- see terraform-azure-ekai's cicd module's
   # self_service_helm_values), not a ReadWriteOnce Azure Disk PVC, to avoid
   # the single-node-attach deadlock when those pods land on different nodes
   # (same class of bug GCP/AWS hit with their own default storage and fixed

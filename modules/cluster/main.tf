@@ -69,7 +69,6 @@ module "aks" {
   source                     = "../aks"
   cluster_name               = var.cluster_name
   region                     = var.region
-  node_count                 = var.node_count
   vm_size                    = var.vm_size
   cluster_version            = var.cluster_version
   sku_tier                   = var.sku_tier

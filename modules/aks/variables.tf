@@ -44,11 +44,6 @@ variable "vnet_subnet_id" {
   type        = list(string)
 }
 
-variable "node_count" {
-  description = "Initial node count for the default AKS node pool."
-  type        = number
-}
-
 variable "vm_size" {
   description = "Azure VM SKU for AKS nodes."
   type        = string

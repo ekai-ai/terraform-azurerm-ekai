@@ -13,9 +13,18 @@ resource "azurerm_kubernetes_cluster" "aks" {
   # self-service onboards real client production environments, so this
   # defaults to "Standard" rather than silently inheriting AKS's own
   # cost-optimized-for-dev default.
-  sku_tier                         = var.sku_tier
-  private_cluster_enabled          = false
-  node_resource_group              = "${var.cluster_name}-node"
+  sku_tier                = var.sku_tier
+  private_cluster_enabled = false
+  # Deliberately left unset -- a custom node_resource_group name moves its
+  # creation from AKS's own first-party identity onto the identity actually
+  # running this apply, which then needs subscription-scope
+  # Microsoft.Resources/subscriptions/resourceGroups/write (Azure has to
+  # authorize the name against the whole subscription before the resource
+  # group exists to scope a narrower check against). The self-service
+  # deployer SP only ever gets Owner on the one pre-existing resource group
+  # (see scripts/self-deploy.sh) -- leaving this unset keeps AKS's own
+  # default auto-named node RG (MC_<resource_group_name>_<cluster_name>_<region>),
+  # which AKS creates and manages itself without needing that extra grant.
   workload_identity_enabled        = true
   oidc_issuer_enabled              = true
   open_service_mesh_enabled        = false

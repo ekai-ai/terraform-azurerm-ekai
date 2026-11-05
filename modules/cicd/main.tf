@@ -149,11 +149,14 @@ locals {
       # ReadWriteOnce-only) -- erd/erd-worker/document-worker/profile-worker
       # share one scratch workspace and can land on different nodes, so an
       # RWO PVC deadlocks with Multi-Attach errors the same way AWS/GCP's
-      # own comments describe for their RWO-by-default storage. No
-      # EFS/GCS-FUSE-equivalent module needed here -- AKS ships RWX file
-      # storage out of the box.
+      # own comments describe for their RWO-by-default storage. The
+      # ekai-saas chart's generic "pvc" type hardcodes ReadWriteOnce
+      # regardless of storageClassName though -- its dedicated "azureFile"
+      # type (>= chart 0.1.16) is what actually requests ReadWriteMany, no
+      # EFS/GCS-FUSE-equivalent Terraform module needed since Azure Files
+      # supports dynamic RWX provisioning out of the box.
       workspace = {
-        type             = "pvc"
+        type             = "azureFile"
         storageClassName = "azurefile-csi"
       }
     }

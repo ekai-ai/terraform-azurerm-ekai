@@ -62,12 +62,16 @@ once this repo is connected to the Terraform Registry (a one-time manual
 step someone with access to the registry/repo settings has to do — publish
 the repo, then push a semver tag; **this does not work until that's been
 done**), you can consume them directly instead of using
-`examples/self-deploy/`. **That first step needs this repo renamed to
-`terraform-azurerm-ekai` beforehand** — the Registry derives a module's
-provider strictly from the repo name (`terraform-<PROVIDER>-<NAME>`, no
-manual override in the publish flow), and the real Terraform provider is
-`azurerm`, not `azure`; publishing as `terraform-azure-ekai` registers
-under the nonexistent provider `azure` instead:
+`examples/self-deploy/`. **A correct publish needs a fresh tag pushed now
+that the repo is renamed** — the Registry derives a module's provider
+strictly from the repo name (`terraform-<PROVIDER>-<NAME>`, no manual
+override in the publish flow); this repo was originally named
+`terraform-azure-ekai` and auto-published under the nonexistent provider
+`azure` as a result (live but unusable at
+[registry.terraform.io/modules/ekai-ai/ekai/azure](https://registry.terraform.io/modules/ekai-ai/ekai/azure)).
+Now renamed to `terraform-azurerm-ekai`, so a new tag will publish
+correctly as `azurerm` — the stale `azure` listing won't migrate on its
+own and should be unpublished separately:
 
 ```hcl
 module "infra" {

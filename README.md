@@ -1,4 +1,4 @@
-# terraform-azure-ekai
+# terraform-azurerm-ekai
 
 Deploy Ekai into **your own Azure subscription**. One script provisions the
 VNet, an AKS cluster, PostgreSQL Flexible Server, in-cluster Redis/Neo4j/MinIO,
@@ -25,8 +25,8 @@ below.
 ## Deploy
 
 ```bash
-git clone https://github.com/ekai-ai/terraform-azure-ekai.git
-cd terraform-azure-ekai
+git clone https://github.com/ekai-ai/terraform-azurerm-ekai.git
+cd terraform-azurerm-ekai
 cp env/customer.tfvars env/<name>.tfvars
 ```
 
@@ -203,17 +203,18 @@ in the error) from whichever directory the error came from.
 
 ## Using this as a Terraform Registry module
 
-**Not published yet, and blocked on a rename first.** The Terraform
-Registry derives a module's provider name strictly from its GitHub repo
-name (`terraform-<PROVIDER>-<NAME>`, no manual override in the publish
-flow) — this repo is named `terraform-azure-ekai`, but the real Terraform
-provider is `azurerm`, not `azure`. Publishing as-is would register under
-the nonexistent provider `azure`, not `azurerm`, making it unusable. This
-repo needs to be renamed to `terraform-azurerm-ekai` *before* connecting
-it to the Registry (a separate one-time manual step after that: sign in to
-[registry.terraform.io](https://registry.terraform.io) with the `ekai-ai`
-org's GitHub account, then publish this repo through the UI). Nothing
-below works until both have happened.
+**Not usably published yet.** The Terraform Registry derives a module's
+provider name strictly from its GitHub repo name
+(`terraform-<PROVIDER>-<NAME>`, no manual override in the publish flow).
+This repo was originally named `terraform-azure-ekai` and got auto-published
+under the nonexistent provider `azure` (not `azurerm`, the real Terraform
+provider) as a result — that stale listing is live at
+[registry.terraform.io/modules/ekai-ai/ekai/azure](https://registry.terraform.io/modules/ekai-ai/ekai/azure)
+but unusable, since nothing can actually reference provider `azure`. The
+repo has since been renamed to `terraform-azurerm-ekai` to fix this going
+forward, but a fresh tag push is still needed to get a correctly-provider-named
+`ekai-ai/ekai/azurerm` listing published — the old `azure` one won't migrate
+on its own and should be unpublished once the new one exists.
 
 ```hcl
 module "infra" {

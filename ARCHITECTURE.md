@@ -218,7 +218,6 @@ files identically.
 | `cluster_version` | — (required) | Kubernetes version |
 | `sku_tier` | `"Standard"` | AKS pricing tier — `Free` has no uptime SLA |
 | `zones` | `["1", "2", "3"]` | Availability zones for both node pools — not every region/subscription supports all three, see Troubleshooting in the README |
-| `node_count` | — (required) | Initial node count |
 | `vm_size` | — (required) | System node pool VM size |
 | `system_node_pool_min_count` / `max_count` | `1` / `3` | System node pool autoscaling range |
 | `app_vm_size` | — (required) | App (user) node pool VM size — needs enough CPU/memory for the whole app stack |

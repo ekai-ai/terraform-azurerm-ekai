@@ -29,6 +29,13 @@ resource "null_resource" "import" {
     command     = <<-EOT
       set -euo pipefail
       DEST="${each.value.dest_repo}:${each.value.dest_tag}"
+      # Unique per instance -- these `for_each` resources' local-exec
+      # provisioners run in parallel, and a shared fixed path here meant
+      # every concurrent import's output interleaved into the same file,
+      # so one image's failure/success grep could match on a completely
+      # different image's output.
+      LOG_FILE=$(mktemp /tmp/acr_import.XXXXXX.log)
+      trap 'rm -f "$LOG_FILE"' EXIT
 
       # Idempotent: import succeeds even if target already exists, OR returns
       # ResourceAlreadyExistsError which we tolerate.
@@ -36,9 +43,9 @@ resource "null_resource" "import" {
         --name "${var.acr_name}" \
         --source "${each.value.source}" \
         --image  "$DEST" \
-        --force 2>&1 | tee /tmp/acr_import.log || {
+        --force 2>&1 | tee "$LOG_FILE" || {
           # If the failure is "already exists", treat as success
-          grep -qiE "already exist|tag is already imported" /tmp/acr_import.log && {
+          grep -qiE "already exist|tag is already imported" "$LOG_FILE" && {
             echo "::notice::image already exists in ACR — skipping"
             exit 0
           }

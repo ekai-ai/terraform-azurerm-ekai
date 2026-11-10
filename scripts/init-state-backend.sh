@@ -53,8 +53,8 @@ if [[ ! -f "${TFVARS}" ]]; then
   exit 1
 fi
 
-REGION=$(grep -E '^region\s*=' "${TFVARS}" | head -1 | sed 's/.*=\s*"\(.*\)".*/\1/')
-RESOURCE_GROUP_NAME=$(grep -E '^resource_group_name\s*=' "${TFVARS}" | head -1 | sed 's/.*=\s*"\(.*\)".*/\1/')
+REGION=$(grep -E '^region[[:space:]]*=' "${TFVARS}" | head -1 | sed 's/.*=[[:space:]]*"\(.*\)".*/\1/')
+RESOURCE_GROUP_NAME=$(grep -E '^resource_group_name[[:space:]]*=' "${TFVARS}" | head -1 | sed 's/.*=[[:space:]]*"\(.*\)".*/\1/')
 if [[ -z "${REGION}" || -z "${RESOURCE_GROUP_NAME}" ]]; then
   echo "ERROR: could not extract 'region' and/or 'resource_group_name' from ${TFVARS}"
   exit 1
@@ -68,7 +68,7 @@ fi
 # with no access to this script's ENV argument -- diverge the two and this
 # script creates the storage account under one name while cicd's remote-state
 # read looks for a different one that doesn't exist.
-ENV_PREFIX=$(grep -E '^env_name\s*=' "${TFVARS}" | head -1 | sed 's/.*=\s*"\(.*\)".*/\1/' || true)
+ENV_PREFIX=$(grep -E '^env_name[[:space:]]*=' "${TFVARS}" | head -1 | sed 's/.*=[[:space:]]*"\(.*\)".*/\1/' || true)
 [[ -z "${ENV_PREFIX}" ]] && ENV_PREFIX="${ENV}"
 
 if [[ ! "${ENV_PREFIX}" =~ ^[a-z0-9]{1,11}$ ]]; then

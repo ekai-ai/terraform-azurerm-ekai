@@ -223,6 +223,16 @@ resource "random_id" "encryption_key" {
   byte_length = 32
 }
 
+# Separate from encryption_key above -- this is a service-to-service
+# internal auth secret, not an encryption key, so it gets its own value
+# instead of sharing one. .hex (not .b64_url) specifically to match the
+# format developers already generate this with by hand: `openssl rand -hex
+# 32` -- 32 random bytes as a 64-char lowercase hex string.
+resource "random_id" "internal_service_secret" {
+  count       = local.self_service ? 1 : 0
+  byte_length = 32
+}
+
 locals {
   # Self-service only -- non-self-service's github_token/username/email
   # already live in local.master_creds (client-provided), so merge() below
@@ -240,10 +250,11 @@ locals {
   # FRONTEND__*_URL are read by the *browser-side* JS bundle behind a strict
   # CSP + the frontend's own reverse-proxy -- must be relative paths.
   generated_service_urls = local.self_service ? {
-    FRONTEND_URL          = "https://portal.${var.dns_zone}"
-    AI_CORE_ENDPOINT      = "http://ekai-erd:9002"
-    FRONTEND__BACKEND_URL = "/api/"
-    FRONTEND__AI_CORE_URL = "/api/ai_core_ms/"
+    FRONTEND_URL                   = "https://portal.${var.dns_zone}"
+    AI_CORE_ENDPOINT               = "http://ekai-erd:9002"
+    PLATFORM__BACKEND_INTERNAL_URL = "http://ekai-backend:3000"
+    FRONTEND__BACKEND_URL          = "/api/"
+    FRONTEND__AI_CORE_URL          = "/api/ai_core_ms/"
   } : {}
 
   # Freshly generated per-install, never reused across environments. All
@@ -262,9 +273,10 @@ locals {
   # GCP, and GCP's own comment is the one that documents why sharing one
   # value is actually required, not just a simplification).
   generated_crypto_keys = local.self_service ? {
-    ENCRYPTION_KEY       = "${random_id.encryption_key[0].b64_url}="
-    PLATFORM__JWT_SECRET = random_id.encryption_key[0].b64_url
-    PLATFORM__FERNET_KEY = "${random_id.encryption_key[0].b64_url}="
+    ENCRYPTION_KEY                    = "${random_id.encryption_key[0].b64_url}="
+    PLATFORM__JWT_SECRET              = random_id.encryption_key[0].b64_url
+    PLATFORM__FERNET_KEY              = "${random_id.encryption_key[0].b64_url}="
+    PLATFORM__INTERNAL_SERVICE_SECRET = random_id.internal_service_secret[0].hex
   } : {}
 
   # Safe, non-secret, working defaults — same for every install.

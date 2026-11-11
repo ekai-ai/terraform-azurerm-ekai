@@ -519,14 +519,11 @@ fi
 if [[ "${CERT_READY}" == "true" ]]; then
   ARGOCD_NAMESPACE=$(terraform output -raw argocd_namespace)
   echo "==> Waiting for the reflected cert secret in ${ARGOCD_NAMESPACE} namespace..."
-  REFLECTED_READY=false
-  for i in $(seq 1 10); do
-    if kubectl get secret "${TLS_NAME}" -n "${ARGOCD_NAMESPACE}" >/dev/null 2>&1; then
-      REFLECTED_READY=true
-      break
-    fi
-    sleep 10
-  done
+  if kubectl wait --for=create "secret/${TLS_NAME}" -n "${ARGOCD_NAMESPACE}" --timeout=100s >/dev/null 2>&1; then
+    REFLECTED_READY=true
+  else
+    REFLECTED_READY=false
+  fi
 
   if [[ "${REFLECTED_READY}" == "true" ]]; then
     CURRENT_SECRET_NAME=$(kubectl get ingress argocd-server -n "${ARGOCD_NAMESPACE}" -o jsonpath='{.spec.tls[0].secretName}' 2>/dev/null || true)

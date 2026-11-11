@@ -12,6 +12,10 @@ output "argocd_admin_username" {
   value = module.infra.argocd_admin_username
 }
 
+output "argocd_namespace" {
+  value = module.infra.argocd_namespace
+}
+
 output "argocd_admin_password" {
   value     = module.infra.argocd_admin_password
   sensitive = true

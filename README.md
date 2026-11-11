@@ -71,32 +71,7 @@ Azure resources).
 
 ## After a successful deploy
 
-The app secret (`ekai-<env_name>` in the deployment's Key Vault, e.g.
-`ekai-customer`) ships with a `REPLACE_ME` placeholder for the one thing the
-app needs a real value for out of the box: AWS SES credentials for signup
-invite emails (used regardless of which cloud hosts the cluster — there's no
-Azure-native equivalent in the app). Fill them in with one command — replace
-the `...` values below with real ones (an AWS IAM user with SES send access
-is enough — self-service uses in-cluster MinIO for file storage, so no S3
-access is needed on that IAM user):
-
-```bash
-VAULT=<key_vault_name output>
-NEW_VALUE=$(az keyvault secret show --vault-name "${VAULT}" --name ekai-customer --query value -o tsv | jq '
-    .AWS_ACCESS_KEY_ID = "..." |
-    .AWS_SECRET_ACCESS_KEY = "..." |
-    .SES_AWS_REGION = "..." |
-    .AWS_SES_FROM_EMAIL = "..."
-  ')
-az keyvault secret set --vault-name "${VAULT}" --name ekai-customer --value "${NEW_VALUE}"
-```
-
-(`<key_vault_name output>` is the real vault name — see `terraform output
-key_vault_name` below.) The app picks up the new secret automatically within
-about a minute (ESO syncs it into the cluster, Reloader restarts the
-affected pods) — no `terraform apply` needed for this step.
-
-Optional — check the ArgoCD URL/password, Azure DNS nameservers, portal URL,
+Check the ArgoCD URL/password, Azure DNS nameservers, portal URL,
 and Key Vault name:
 
 ```bash

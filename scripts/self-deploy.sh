@@ -508,6 +508,40 @@ else
   echo "  until it resolves on its own. Check: kubectl get certificate ${TLS_NAME} -n cert-manager"
 fi
 
+# ── Confirm the ArgoCD Ingress actually points at the cert we just issued ────
+# The source cert being Ready only means cert-manager finished -- it says
+# nothing about whether the reflector has mirrored it into argocd's
+# namespace yet, or whether the ArgoCD Ingress's spec.tls[0].secretName
+# still matches that mirrored secret's name. Confirmed live that the two can
+# drift apart (e.g. a manual kubectl edit) with no error anywhere -- nginx
+# just silently falls back to its default fake cert. Verify the live object,
+# don't just trust the Helm release's recorded values.
+if [[ "${CERT_READY}" == "true" ]]; then
+  ARGOCD_NAMESPACE=$(terraform output -raw argocd_namespace)
+  echo "==> Waiting for the reflected cert secret in ${ARGOCD_NAMESPACE} namespace..."
+  REFLECTED_READY=false
+  for i in $(seq 1 10); do
+    if kubectl get secret "${TLS_NAME}" -n "${ARGOCD_NAMESPACE}" >/dev/null 2>&1; then
+      REFLECTED_READY=true
+      break
+    fi
+    sleep 10
+  done
+
+  if [[ "${REFLECTED_READY}" == "true" ]]; then
+    CURRENT_SECRET_NAME=$(kubectl get ingress argocd-server -n "${ARGOCD_NAMESPACE}" -o jsonpath='{.spec.tls[0].secretName}' 2>/dev/null || true)
+    if [[ -n "${CURRENT_SECRET_NAME}" && "${CURRENT_SECRET_NAME}" != "${TLS_NAME}" ]]; then
+      echo "⚠ ArgoCD Ingress TLS secretName drifted (\"${CURRENT_SECRET_NAME}\" != \"${TLS_NAME}\") -- correcting..."
+      kubectl patch ingress argocd-server -n "${ARGOCD_NAMESPACE}" --type=json \
+        -p="[{\"op\":\"replace\",\"path\":\"/spec/tls/0/secretName\",\"value\":\"${TLS_NAME}\"}]"
+      echo "✓ ArgoCD Ingress now points at ${TLS_NAME}."
+    fi
+  else
+    echo "⚠ Reflected cert secret never appeared in ${ARGOCD_NAMESPACE} namespace -- ArgoCD URL will show cert errors."
+    echo "  Check: kubectl get pods -n kube-system -l app.kubernetes.io/name=reflector"
+  fi
+fi
+
 echo
 echo "✓ Deploy complete for env=${ENV}."
 echo "Generated credentials are saved at: ${SECRETS_FILE} — copy into your password manager, then delete the file."

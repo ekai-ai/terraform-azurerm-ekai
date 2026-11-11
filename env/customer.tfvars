@@ -51,30 +51,42 @@ pri_sub_3_cidr   = "10.0.16.0/22"
 
 cluster_name    = "ekai-saas-aks-customer"
 cluster_version = "1.34.1"
-vm_size         = "Standard_B2ms"
+# Dsv5 family (AMD), not a B-series Burstable size -- Burstable is CPU-credit
+# based and not appropriate for a continuously-loaded production node pool
+# (Microsoft's own guidance scopes B-series to dev/test and intermittent
+# workloads). Dsv5 also has a genuine self-service quota path; some
+# Burstable families are flagged by Azure as legacy and refuse quota
+# increases outright (confirmed live against a real subscription).
+vm_size         = "Standard_D2as_v5"
 
 # zones defaults to ["1", "2", "3"] (all node pools spread across all three)
-# -- not every Azure region supports availability zones. Verify the target
-# region does before applying (an unsupported zone number fails the apply
-# outright); set zones = [] here if it doesn't.
+# -- not every Azure region (or every individual subscription within a
+# region that otherwise supports zones) has capacity for a given VM size in
+# all three zones. Verify the target region/subscription does before
+# applying (an unsupported zone fails the apply outright, see
+# Troubleshooting); set zones = ["1"] (or whichever single zone is
+# available) if it doesn't -- confirmed live on a capacity-constrained
+# subscription where this affected every VM size tried, not just one.
 
 system_node_pool_min_count = 1
 system_node_pool_max_count = 3
 # VM SKU + scaling for the app (user) node pool where all workloads run.
 # Needs enough CPU/memory for the whole app stack (backend/frontend/erd/
-# workers/semantics/profile) plus Redis and cluster addons.
+# workers/profile) plus Redis and cluster addons.
 #
 # Check your subscription's vCPU quota BEFORE the first apply, not after it
 # fails partway through: steady state alone already needs 10 vCPUs --
-# system_node_pool_min_count (1) x Standard_B2ms (2 vCPU) + app_node_pool_min_count
-# (2) x Standard_B4ms (4 vCPU) -- and AKS node-image upgrades temporarily run
+# system_node_pool_min_count (1) x Standard_D2as_v5 (2 vCPU) + app_node_pool_min_count
+# (2) x Standard_D4as_v5 (4 vCPU) -- and AKS node-image upgrades temporarily run
 # extra nodes on top of that (upgrade_settings.max_surge in modules/aks/main.tf),
 # so budget noticeably more than 10. A fresh/trial subscription's default
 # "Total Regional vCPUs" quota is commonly as low as ~10 -- request an
-# increase in the Azure Portal (Service Quotas) well before deploying; it's
-# usually auto-approved within minutes. See the README's Troubleshooting
-# section if you hit InsufficientVCPUQuota mid-apply instead.
-app_vm_size             = "Standard_B4ms"
+# increase in the Azure Portal (Service Quotas) well before deploying.
+# Usually self-service/fast, but not guaranteed -- confirmed live that a
+# constrained subscription can reject even a modest increase outright,
+# needing an Azure support ticket instead. See the README's Troubleshooting
+# section if you hit InsufficientVCPUQuota mid-apply.
+app_vm_size             = "Standard_D4as_v5"
 app_node_pool_min_count = 2
 app_node_pool_max_count = 6
 

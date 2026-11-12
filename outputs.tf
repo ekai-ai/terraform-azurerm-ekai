@@ -58,6 +58,11 @@ output "tls_name" {
   value       = local.tls_name
 }
 
+output "argocd_namespace" {
+  description = "Namespace ArgoCD is installed into. scripts/self-deploy.sh uses this to verify the reflected wildcard cert secret actually landed there and that the ArgoCD Ingress's TLS secretName wasn't drifted away from it."
+  value       = var.argocd_namespace
+}
+
 # ═══════════════════════════════════════════════════════════════════════════
 # Consumed by ./cicd/'s data "terraform_remote_state" "combined" block only
 # ═══════════════════════════════════════════════════════════════════════════

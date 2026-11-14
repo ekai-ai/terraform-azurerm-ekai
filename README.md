@@ -27,7 +27,9 @@ below.
 Only relevant if your subscription forces egress through a restrictive
 firewall (common under an Azure Landing Zone / hub-and-spoke setup). Give
 this list to whoever manages that firewall before deploying — otherwise AKS
-node pools create successfully but the nodes never finish booting.
+node pools create successfully but the nodes never finish booting. Running
+`self-deploy.sh` from a VM *inside* that same restricted network? Then both
+tables below apply to that one firewall, not just the cluster's.
 
 **Machine running `self-deploy.sh`:** `management.azure.com`,
 `login.microsoftonline.com`, `github.com`, `raw.githubusercontent.com`,

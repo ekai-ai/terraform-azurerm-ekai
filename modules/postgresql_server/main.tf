@@ -25,7 +25,12 @@ resource "azurerm_postgresql_flexible_server" "ekai-db" {
   delegated_subnet_id = var.subnet_id
   private_dns_zone_id = azurerm_private_dns_zone.ekai-db.id
   sku_name            = var.postgres_flexible_server_sku_name
-  zone                = var.enable_ha ? "1" : null
+  # availability_zone (passed from root as zones[0]) wins when set -- confirmed
+  # live that leaving this null on a subscription with a restricted zone set
+  # lets Azure auto-assign an unsupported zone, failing with a misleading
+  # "SkuNotAvailable" that's actually a zone placement failure, not a real SKU
+  # restriction. Falls back to the old enable_ha-only behavior when unset.
+  zone = var.availability_zone != null ? var.availability_zone : (var.enable_ha ? "1" : null)
   # "ZoneRedundant" (not "SameZone"): the standby lives in a DIFFERENT zone
   # from the primary (standby_availability_zone = "2" vs. primary zone "1"
   # above), so a single zone outage doesn't take out both. "SameZone" HA

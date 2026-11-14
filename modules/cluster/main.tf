@@ -164,12 +164,16 @@ module "postgresql_server" {
   resource_group_name                 = var.resource_group_name
   postgresql_version                  = var.postgresql_version
   enable_ha                           = var.enable_ha
-  geo_redundant_backup_enabled        = var.geo_redundant_backup_enabled
-  env_name                            = var.env_name
-  backend_db_username                 = local.backend_db_username
-  backend_db_password                 = local.backend_db_password
-  backend_db_name                     = local.backend_db_name
-  tags                                = local.common_tags
+  # Same zone list AKS's node pools use (var.zones) -- a subscription with a
+  # restricted zone set (confirmed live) needs Postgres pinned to one of
+  # those same zones too, not left to Azure's own auto-assignment.
+  availability_zone            = length(var.zones) > 0 ? var.zones[0] : null
+  geo_redundant_backup_enabled = var.geo_redundant_backup_enabled
+  env_name                     = var.env_name
+  backend_db_username          = local.backend_db_username
+  backend_db_password          = local.backend_db_password
+  backend_db_name              = local.backend_db_name
+  tags                         = local.common_tags
 }
 
 # ── ACR + AcrPull for AKS kubelet ───────────────────────────────────────────

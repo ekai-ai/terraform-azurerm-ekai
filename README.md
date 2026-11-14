@@ -22,6 +22,70 @@ below.
 - A domain you can either delegate a subdomain of to Azure DNS, or that
   already has an Azure DNS zone
 
+## Network Requirements
+
+Skip this section if your Azure subscription has unrestricted outbound
+internet access (the default). It only matters if your subscription enforces
+egress through a restrictive firewall — common in enterprise subscriptions
+governed under an Azure Landing Zone / hub-and-spoke pattern, where Azure
+Policy can silently force every new subnet's traffic through a central
+firewall. **This repo's own Terraform/NSGs have no way to detect or work
+around that** — it's a layer above anything this repo creates, enforced by
+your own network team. If that's your environment, give the list below to
+whoever manages that firewall *before* you run `self-deploy.sh` — otherwise
+the symptoms are confusing (AKS node creation can still succeed; the nodes
+then fail to actually boot, with no indication the firewall is the cause).
+
+Two different things need outbound access, for different reasons — don't
+conflate them:
+
+### 1. The machine running `self-deploy.sh` / `terraform apply`
+
+| Destination | Why |
+| --- | --- |
+| `management.azure.com`, `login.microsoftonline.com` | Azure Resource Manager API + auth — every resource this creates goes through these |
+| `github.com`, `raw.githubusercontent.com`, `codeload.github.com` | Downloading this repo and `install.sh` |
+| `registry.terraform.io`, `releases.hashicorp.com` | Terraform itself + its providers |
+| `licensing.ekai.ai` | OAuth login + deploy token (if installing via [licensing.ekai.ai](https://licensing.ekai.ai/)) |
+| `*.blob.core.windows.net` | The Terraform state storage account this creates |
+| `argoproj.github.io`, `charts.jetstack.io`, `emberstack.github.io`, `charts.external-secrets.io`, `kubernetes.github.io`, `stakater.github.io`, `helm.neo4j.com`, `charts.bitnami.com`, `registry-1.docker.io` | Helm chart repositories for ArgoCD, cert-manager, Reflector, External Secrets, nginx-ingress, Reloader, Neo4j, MinIO, and Redis (Terraform's `helm_release` resources fetch these client-side, before anything reaches the cluster) |
+
+### 2. The AKS cluster itself (nodes + in-cluster services)
+
+This is the harder one to get right, and the one most likely to be
+**silently wrong rather than loudly broken** — AKS will accept the node
+pool creation, then the node fails to finish booting with a generic-looking
+`VMExtensionProvisioningError`. The required set below is Microsoft's own
+documented minimum for any AKS cluster
+([source](https://learn.microsoft.com/en-us/azure/aks/outbound-rules-control-egress)),
+confirmed live against a real restricted subscription for this repo —
+without it, node bootstrap fails outright; with it, bootstrap succeeds:
+
+| Destination | Port | Why |
+| --- | --- | --- |
+| `*.hcp.<region>.azmk8s.io` | HTTPS 443 | Node ↔ API server |
+| `mcr.microsoft.com`, `*.data.mcr.microsoft.com`, `mcr-0001.mcr-msedge.net` | HTTPS 443 | Microsoft Container Registry (coreDNS and other core cluster images) |
+| `management.azure.com`, `login.microsoftonline.com` | HTTPS 443 | Kubernetes operations against the Azure API + Entra auth |
+| `packages.microsoft.com` | HTTPS 443 | apt-get (Moby, PowerShell, Azure CLI) |
+| `acs-mirror.azureedge.net`, `packages.aks.azure.com` | HTTPS 443 | kubenet/Azure CNI binaries |
+| `AzureCloud.<region>` (service tag) | UDP 1194, TCP 9000 | Node ↔ control plane tunnel |
+| any (`*`) | UDP 123 | NTP time sync |
+
+Beyond Microsoft's own baseline, this repo's specific workloads need their
+**container image** registries reachable too (separate from the Helm chart
+repos in the table above — those are only fetched by the machine running
+Terraform, not by the cluster):
+
+| Destination | Why |
+| --- | --- |
+| `quay.io` | ArgoCD, ArgoCD Image Updater, cert-manager images |
+| `ghcr.io` | Reflector, External Secrets, Reloader images |
+| `registry.k8s.io` | nginx-ingress controller image |
+| `docker.io` | Redis and Neo4j images (their charts don't mirror these — pulled directly by the nodes at pod-creation time) |
+| `public.ecr.aws` | The `ekai-saas` Helm chart itself (pulled by ArgoCD, in-cluster) and every app image (backend, frontend, erd, document-worker, profile-worker) |
+| `acme-v02.api.letsencrypt.org` | cert-manager's ACME calls to issue the wildcard TLS certificate |
+| `<your-acr-name>.azurecr.io` (printed after deploy, or allow `*.azurecr.io` if deploying before you know the exact name) | The 3 MinIO images, mirrored here from Docker Hub by Azure's own backend (not the customer's network) specifically so the cluster doesn't need Docker Hub for those — this is the one destination that *is* customer-deployment-specific, everything else above is fixed |
+
 ## Deploy
 
 ```bash

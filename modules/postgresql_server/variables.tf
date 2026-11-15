@@ -44,6 +44,12 @@ variable "enable_ha" {
   default     = true
 }
 
+variable "availability_zone" {
+  description = "Which zone the primary instance pins to -- independent of enable_ha (a non-HA server can still pin to a specific zone instead of leaving it to Azure's own, unpredictable auto-assignment). Pass the same zone list root module's var.zones resolves to for AKS, e.g. its first element -- confirmed live that leaving this null on a subscription with a restricted zone set can land the server on an unsupported zone (SkuNotAvailable, a misleading error for what's actually a zone placement failure). null falls back to the previous behavior (zone \"1\" when enable_ha, otherwise Azure's own auto-assignment)."
+  type        = string
+  default     = null
+}
+
 variable "geo_redundant_backup_enabled" {
   description = "Copy backups to the paired region, protecting against a full primary-region outage (not just a zone within it, which enable_ha covers). Roughly doubles backup storage cost."
   type        = bool

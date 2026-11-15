@@ -153,16 +153,37 @@ if [[ "${CLEAN_RG}" =~ ^[Yy]$ ]]; then
   # against one Azure still has mid-delete (provisioningState: Deleting) if
   # we return here before it's actually gone.
   echo "  Waiting for deletion to finish (can take several minutes for a full AKS + networking + Postgres env)..."
+  # The deployer SP's own "Owner" grant is scoped to exactly this resource
+  # group. Once Azure's delete operation reaches the point of tearing down
+  # the RG's own RBAC scope, THIS identity loses the ability to even check
+  # `az group exists` on it -- well before the underlying resources are
+  # actually gone. Confirmed live: polling as the scoped SP hits a wall of
+  # repeated AuthorizationFailed mid-delete, which is a sign the deletion is
+  # progressing (it just outran this identity's own visibility), not a
+  # stuck/failed deletion. Treat that specific error as success for polling
+  # purposes instead of hammering the API with it 60 times.
+  DELETED=false
   for i in $(seq 1 60); do
-    if [[ "$(az group exists --name "${RESOURCE_GROUP_NAME}")" == "false" ]]; then
+    EXISTS_OUTPUT=$(az group exists --name "${RESOURCE_GROUP_NAME}" 2>&1)
+    if [[ "${EXISTS_OUTPUT}" == "false" ]]; then
       echo "  ✓ ${RESOURCE_GROUP_NAME} deleted."
+      DELETED=true
+      break
+    elif echo "${EXISTS_OUTPUT}" | grep -qi "AuthorizationFailed"; then
+      echo "  ✓ Lost visibility into ${RESOURCE_GROUP_NAME} -- its own RBAC scope is"
+      echo "    being torn down as part of the deletion, which confirms it's actively"
+      echo "    progressing (not stuck). Stopping polling here; Azure finishes the"
+      echo "    rest in the background regardless of this script watching it."
+      DELETED=true
       break
     fi
     sleep 15
   done
-  if [[ "$(az group exists --name "${RESOURCE_GROUP_NAME}")" == "true" ]]; then
+  if [[ "${DELETED}" != "true" ]]; then
     echo "  ⚠ Still deleting after 15 minutes -- Azure is still processing it in the"
     echo "    background. Check status: az group show --name ${RESOURCE_GROUP_NAME}"
+    echo "    (run that as your own admin account, not the scoped deployer SP, which"
+    echo "    may have already lost visibility into this RG per above)."
     echo "    Wait for it to finish before re-running self-deploy.sh with this env name."
   fi
 else

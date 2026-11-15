@@ -79,13 +79,15 @@ system_node_pool_max_count = 3
 # system_node_pool_min_count (1) x Standard_D2as_v5 (2 vCPU) + app_node_pool_min_count
 # (2) x Standard_D4as_v5 (4 vCPU) -- and AKS node-image upgrades temporarily run
 # extra nodes on top of that (upgrade_settings.max_surge in modules/aks/main.tf),
-# so budget noticeably more than 10. A fresh/trial subscription's default
-# "Total Regional vCPUs" quota is commonly as low as ~10 -- request an
-# increase in the Azure Portal (Service Quotas) well before deploying.
-# Usually self-service/fast, but not guaranteed -- confirmed live that a
-# constrained subscription can reject even a modest increase outright,
-# needing an Azure support ticket instead. See the README's Troubleshooting
-# section if you hit InsufficientVCPUQuota mid-apply.
+# so request 20, not just 10 -- confirmed live that the autoscaler gets
+# rejected (409) trying to add a node right at the 10 vCPU boundary. A
+# fresh/trial subscription's default "Total Regional vCPUs" quota is
+# commonly as low as ~10 -- request the increase in the Azure Portal
+# (Service Quotas) well before deploying. Usually self-service/fast, but not
+# guaranteed -- confirmed live that a constrained subscription can reject
+# even a modest increase outright, needing an Azure support ticket instead.
+# See the README's Troubleshooting section if you hit InsufficientVCPUQuota
+# mid-apply.
 app_vm_size             = "Standard_D4as_v5"
 app_node_pool_min_count = 2
 app_node_pool_max_count = 6

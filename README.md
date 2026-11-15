@@ -22,6 +22,40 @@ below.
 - A domain you can either delegate a subdomain of to Azure DNS, or that
   already has an Azure DNS zone
 
+## Network Requirements
+
+Only relevant if your subscription forces egress through a restrictive
+firewall (common under an Azure Landing Zone / hub-and-spoke setup). Give
+this list to whoever manages that firewall before deploying — otherwise AKS
+node pools create successfully but the nodes never finish booting. Running
+`self-deploy.sh` from a VM *inside* that same restricted network? Then both
+tables below apply to that one firewall, not just the cluster's.
+
+**Machine running `self-deploy.sh`:** `management.azure.com`,
+`login.microsoftonline.com`, `github.com`, `raw.githubusercontent.com`,
+`codeload.github.com`, `registry.terraform.io`, `releases.hashicorp.com`,
+`licensing.ekai.ai`, `*.blob.core.windows.net`, plus the Helm chart repos:
+`argoproj.github.io`, `charts.jetstack.io`, `emberstack.github.io`,
+`charts.external-secrets.io`, `kubernetes.github.io`, `stakater.github.io`,
+`helm.neo4j.com`, `charts.bitnami.com`, `registry-1.docker.io`.
+
+**The AKS cluster (nodes + pods):**
+
+| Destination | Port | Why |
+| --- | --- | --- |
+| `*.hcp.<region>.azmk8s.io`, `mcr.microsoft.com`, `*.data.mcr.microsoft.com`, `mcr-0001.mcr-msedge.net`, `management.azure.com`, `login.microsoftonline.com`, `packages.microsoft.com`, `acs-mirror.azureedge.net`, `packages.aks.azure.com` | HTTPS 443 | Microsoft's own required minimum for any AKS cluster ([source](https://learn.microsoft.com/en-us/azure/aks/outbound-rules-control-egress)) — confirmed live, node bootstrap fails without these |
+| `AzureCloud.<region>` (service tag) | UDP 1194, TCP 9000 | Node ↔ control plane tunnel |
+| any (`*`) | UDP 123 | NTP |
+| `quay.io`, `ghcr.io`, `registry.k8s.io`, `docker.io` | HTTPS 443 | Container images for ArgoCD/cert-manager, Reflector/External Secrets/Reloader, nginx-ingress, and Redis/Neo4j respectively |
+| `public.ecr.aws` | HTTPS 443 | The `ekai-saas` Helm chart + every app image |
+| `licensing.ekai.ai` | HTTPS 443 | Backend pod's own runtime license checks (not just the installer) |
+| `acme-v02.api.letsencrypt.org` | HTTPS 443 | cert-manager's wildcard cert issuance |
+| `<your-acr-name>.azurecr.io` (or `*.azurecr.io` before you know the exact name) | HTTPS 443 | MinIO images — mirrored here from Docker Hub by Azure's own backend, so this is the only Docker-Hub-sourced thing the cluster itself doesn't need direct Docker Hub access for |
+
+Only if you fill in the optional GitHub-sync or AWS-SES placeholders in the
+customer secret: `api.github.com` (GitHub sync) or `email.<region>.amazonaws.com`
+(your own SES credentials) — skip both if you leave those `REPLACE_ME`.
+
 ## Deploy
 
 ```bash

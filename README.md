@@ -44,7 +44,7 @@ tables below apply to that one firewall, not just the cluster's.
 | Destination | Port | Why |
 | --- | --- | --- |
 | `*.hcp.<region>.azmk8s.io`, `mcr.microsoft.com`, `*.data.mcr.microsoft.com`, `mcr-0001.mcr-msedge.net`, `management.azure.com`, `login.microsoftonline.com`, `packages.microsoft.com`, `acs-mirror.azureedge.net`, `packages.aks.azure.com` | HTTPS 443 | Microsoft's own required minimum for any AKS cluster ([source](https://learn.microsoft.com/en-us/azure/aks/outbound-rules-control-egress)) — confirmed live, node bootstrap fails without these |
-| `AzureCloud.<region>` (service tag) | UDP 1194, TCP 9000 | Node ↔ control plane tunnel |
+| `AzureCloud.<region>` (service tag, e.g. `AzureCloud.NorthEurope` — region name in PascalCase, not the lowercase `northeurope` used elsewhere) | UDP 1194, TCP 9000 | Node ↔ control plane tunnel |
 | any (`*`) | UDP 123 | NTP |
 | `quay.io`, `ghcr.io`, `registry.k8s.io`, `docker.io` | HTTPS 443 | Container images for ArgoCD/cert-manager, Reflector/External Secrets/Reloader, nginx-ingress, and Redis/Neo4j respectively |
 | `public.ecr.aws` | HTTPS 443 | The `ekai-saas` Helm chart + every app image |

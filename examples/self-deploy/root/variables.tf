@@ -267,7 +267,7 @@ variable "existing_acr_name" {
 }
 
 # ═══════════════════════════════════════════════════════════════════════════
-# platform submodule (nginx-ingress, cert-manager, ESO, ArgoCD, Redis, MinIO)
+# platform submodule (nginx-ingress, cert-manager, ESO, ArgoCD, Redis)
 # ═══════════════════════════════════════════════════════════════════════════
 
 variable "argocd_namespace" {
@@ -387,63 +387,6 @@ variable "neo4j_cpu_request" {
 variable "neo4j_cpu_limit" {
   type    = string
   default = "2"
-}
-
-variable "minio_namespace" {
-  type    = string
-  default = "minio"
-}
-
-variable "minio_chart_version" {
-  type    = string
-  default = "17.0.21"
-}
-
-variable "minio_persistence_size" {
-  type    = string
-  default = "50Gi"
-}
-
-variable "minio_storage_class" {
-  type    = string
-  default = "managed-premium"
-}
-
-variable "minio_replicas" {
-  type    = number
-  default = 4
-}
-
-variable "minio_mode" {
-  type    = string
-  default = "distributed"
-}
-
-variable "minio_default_buckets" {
-  type    = list(string)
-  default = ["ekai-files"]
-}
-
-variable "minio_host" {
-  description = "Hostname for the MinIO ingress. Defaults to \"minio.<dns_zone>\"."
-  type        = string
-  default     = null
-}
-
-variable "minio_enable_ingress" {
-  type    = bool
-  default = true
-}
-
-variable "minio_resources" {
-  type = object({
-    requests = map(string)
-    limits   = map(string)
-  })
-  default = {
-    requests = { cpu = "100m", memory = "256Mi" }
-    limits   = { cpu = "1", memory = "1Gi" }
-  }
 }
 
 variable "secret_value_overrides" {

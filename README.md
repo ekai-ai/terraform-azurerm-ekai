@@ -1,7 +1,7 @@
 # terraform-azurerm-ekai
 
 Deploy Ekai into **your own Azure subscription**. One script provisions the
-VNet, an AKS cluster, PostgreSQL Flexible Server, in-cluster Redis/Neo4j/MinIO,
+VNet, an AKS cluster, PostgreSQL Flexible Server, in-cluster Redis/Neo4j,
 ArgoCD, and the `ekai-saas` Helm chart — everything needed for a working Ekai
 install.
 
@@ -50,7 +50,6 @@ tables below apply to that one firewall, not just the cluster's.
 | `public.ecr.aws` | HTTPS 443 | The `ekai-saas` Helm chart + every app image |
 | `licensing.ekai.ai` | HTTPS 443 | Backend pod's own runtime license checks (not just the installer) |
 | `acme-v02.api.letsencrypt.org` | HTTPS 443 | cert-manager's wildcard cert issuance |
-| `<your-acr-name>.azurecr.io` (or `*.azurecr.io` before you know the exact name) | HTTPS 443 | MinIO images — mirrored here from Docker Hub by Azure's own backend, so this is the only Docker-Hub-sourced thing the cluster itself doesn't need direct Docker Hub access for |
 
 Only if you fill in the optional GitHub-sync or AWS-SES placeholders in the
 customer secret: `api.github.com` (GitHub sync) or `email.<region>.amazonaws.com`
@@ -160,7 +159,7 @@ auto-approved within minutes on a pay-as-you-go subscription), or lower
 tfvars so more, smaller nodes fit in the existing budget.
 
 **`context deadline exceeded` / `TLS handshake timeout` on the first
-Helm releases (`nginx_ingress`, `argocd`, `minio`, ...) right after a fresh
+Helm releases (`nginx_ingress`, `argocd`, ...) right after a fresh
 AKS cluster comes up** — a brief, non-deterministic window where
 `azurerm_kubernetes_cluster` reports `Succeeded` but the API server can't
 yet reliably answer heavy calls (Helm's pre-install schema discovery is one).
@@ -170,7 +169,7 @@ left in `failed` status, which blocks a retry's fresh install with "cannot
 re-use a name that is still in use." Clear it first:
 
 ```bash
-helm uninstall <name> -n <namespace>   # e.g. argocd -n argocd, minio -n minio
+helm uninstall <name> -n <namespace>   # e.g. argocd -n argocd
 ```
 
 then re-run `self-deploy.sh`.

@@ -110,13 +110,13 @@ examples/self-deploy/
 modules/
   bootstrap/        # DNS zone
   cluster/          # VNet, AKS, PostgreSQL Flexible Server, Key Vault (+ ESO/cert-manager UAMIs), ACR
-  platform/         # wires nginx-ingress, cert-manager, external_secrets (ESO controller), redis, neo4j, minio, argocd, reloader together
+  platform/         # wires nginx-ingress, cert-manager, external_secrets (ESO controller), redis, neo4j, argocd, reloader together
   cert-manager/     # cert-manager Helm release, ClusterIssuers (DNS-01 via Azure DNS, UAMI-authenticated), wildcard Certificate, reflector
   cicd/             # ExternalSecret (app secret sync), the shared app Workload Identity, wires microservices_CD + github_action
   microservices_CD/ # the ArgoCD Application that deploys the ekai-saas chart, wildcard DNS A record
   key_vault/        # Key Vault resource + RBAC + ESO/cert-manager federated identities — see its own header for why UAMI, not an Entra app
   app_workload_identity/   # per-service Workload Identity (UAMI + federated credential), wired by cicd/
-  <shared low-level modules used by the above: vnet, aks, log_analytics, postgresql_server, acr, acr_image_mirror, redis, neo4j, minio, argocd, reloader, nginx_ingress, external_secrets, github_action>
+  <shared low-level modules used by the above: vnet, aks, log_analytics, postgresql_server, acr, redis, neo4j, argocd, reloader, nginx_ingress, external_secrets, github_action>
 env/
   customer.tfvars   # template — copy and fill in; shared by both applies
 scripts/
@@ -239,7 +239,7 @@ files identically.
 | `enable_ha` | `true` | Zone-redundant standby — roughly doubles cost; needs 2+ available zones |
 | `geo_redundant_backup_enabled` | `true` | Cross-region backup copy — roughly doubles backup storage cost |
 
-### Platform submodule (ingress, cert-manager, ESO, Redis, Neo4j, MinIO, ArgoCD)
+### Platform submodule (ingress, cert-manager, ESO, Redis, Neo4j, ArgoCD)
 
 | Variable | Default | What it controls |
 |---|---|---|
@@ -254,11 +254,6 @@ files identically.
 | `neo4j_namespace` / `neo4j_chart_version` | `"neo4j"` / `"5.26.0"` | Neo4j namespace + chart version — always deployed, no toggle |
 | `neo4j_storage_size` / `neo4j_storage_class` | `"20Gi"` / `"managed-premium"` | Neo4j PVC sizing |
 | `neo4j_memory_request` / `_limit`, `neo4j_cpu_request` / `_limit` | `"2Gi"`/`"4Gi"`, `"500m"`/`"2"` | Neo4j pod sizing |
-| `minio_namespace` / `minio_chart_version` | `"minio"` / `"17.0.21"` | MinIO namespace + Bitnami chart version |
-| `minio_replicas` / `minio_mode` | `4` / `"distributed"` | MinIO replica count + mode — 4 replicas × 50Gi default = 200Gi total storage |
-| `minio_persistence_size` / `minio_storage_class` | `"50Gi"` / `"managed-premium"` | MinIO PVC sizing |
-| `minio_default_buckets` | `["ekai-files"]` | Buckets created on first install |
-| `minio_host` | `null` → `"minio.<dns_zone>"` | MinIO ingress hostname |
 | `reloader_chart_version` | `"1.2.0"` | Stakater Reloader chart version — restarts pods when K8s Secrets change |
 | `secret_value_overrides` | `{}` | Escape hatch to override any individual key in the master Key Vault secret |
 

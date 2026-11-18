@@ -121,15 +121,5 @@ module "infra" {
   neo4j_memory_limit                  = var.neo4j_memory_limit
   neo4j_cpu_request                   = var.neo4j_cpu_request
   neo4j_cpu_limit                     = var.neo4j_cpu_limit
-  minio_namespace                     = var.minio_namespace
-  minio_chart_version                 = var.minio_chart_version
-  minio_persistence_size              = var.minio_persistence_size
-  minio_storage_class                 = var.minio_storage_class
-  minio_replicas                      = var.minio_replicas
-  minio_mode                          = var.minio_mode
-  minio_default_buckets               = var.minio_default_buckets
-  minio_host                          = var.minio_host
-  minio_enable_ingress                = var.minio_enable_ingress
-  minio_resources                     = var.minio_resources
   secret_value_overrides              = var.secret_value_overrides
 }

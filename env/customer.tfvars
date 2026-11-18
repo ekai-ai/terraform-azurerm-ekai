@@ -126,7 +126,10 @@ argocd_namespace = "argocd"
 # generates its own ArgoCD admin password + hash directly (platform submodule).
 
 # Redis and Neo4j are always deployed (no enable_redis/enable_neo4j toggle in
-# this repo) — the ekai-saas chart's ERD/KEDA features need both.
+# this repo) — the ekai-saas chart's ERD/KEDA features need both. No file
+# storage backend is provisioned (MinIO removed, no native Azure Blob code
+# path in the app) -- file uploads won't work until one is wired up (e.g.
+# pointing USE_MINIO=false at a real AWS S3 bucket).
 
 # Let's Encrypt registration email. cluster_issuer_name defaults to
 # "letsencrypt-prod" (a real, browser-trusted cert) -- left unset here. Only
@@ -137,9 +140,6 @@ argocd_namespace = "argocd"
 # stand-in Terraform will silently accept. Set this to a real address before
 # applying (Terraform's own validation rejects REPLACE_ME/empty/malformed).
 acme_email = "REPLACE_ME"
-
-# minio_persistence_size default (50Gi) x minio_replicas default (4) = 200Gi
-# total provisioned storage.
 
 # ─── cicd/ (separate apply) — self-service mode ────────────────────────────────
 # cicd_provider = "none" is the entire point of this file: no GitHub Actions

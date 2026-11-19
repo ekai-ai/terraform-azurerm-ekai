@@ -49,7 +49,6 @@ locals {
 
   tls_name            = coalesce(var.tls_name, "${var.env_name}-ekai-wildcard-tls")
   argocd_ingress_host = coalesce(var.argocd_ingress_host, "argocd.${var.dns_zone}")
-  minio_host          = coalesce(var.minio_host, "minio.${var.dns_zone}")
 }
 
 data "azurerm_client_config" "current" {}
@@ -140,16 +139,6 @@ module "platform" {
   neo4j_memory_limit           = var.neo4j_memory_limit
   neo4j_cpu_request            = var.neo4j_cpu_request
   neo4j_cpu_limit              = var.neo4j_cpu_limit
-  minio_namespace              = var.minio_namespace
-  minio_chart_version          = var.minio_chart_version
-  minio_persistence_size       = var.minio_persistence_size
-  minio_storage_class          = var.minio_storage_class
-  minio_replicas               = var.minio_replicas
-  minio_mode                   = var.minio_mode
-  minio_default_buckets        = var.minio_default_buckets
-  minio_host                   = local.minio_host
-  minio_enable_ingress         = var.minio_enable_ingress
-  minio_resources              = var.minio_resources
   secret_value_overrides       = var.secret_value_overrides
   tags                         = var.tags
 
@@ -159,8 +148,6 @@ module "platform" {
   tenant_id                   = module.cluster.tenant_id
   eso_app_client_id           = module.cluster.eso_app_client_id
   cert_manager_uami_client_id = module.cluster.cert_manager_uami_client_id
-  acr_login_server            = module.cluster.acr_login_server
-  mirrored_image_tags         = module.cluster.mirrored_image_tags
   postgres_fqdn               = module.cluster.postgres_fqdn
   backend_db_username         = module.cluster.backend_db_username
   backend_db_password         = module.cluster.backend_db_password

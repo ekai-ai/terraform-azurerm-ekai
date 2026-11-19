@@ -128,8 +128,11 @@ argocd_namespace = "argocd"
 # Redis and Neo4j are always deployed (no enable_redis/enable_neo4j toggle in
 # this repo) — the ekai-saas chart's ERD/KEDA features need both. No file
 # storage backend is provisioned (MinIO removed, no native Azure Blob code
-# path in the app) -- file uploads won't work until one is wired up (e.g.
-# pointing USE_MINIO=false at a real AWS S3 bucket).
+# path in the app) -- file uploads won't work until one is wired up. Pointing
+# the app at a real AWS S3 bucket is only half supported so far: self-service
+# can set EKAI_BUCKET/AWS_REGION via secret_value_overrides, but AWS_REGION
+# is otherwise hardcoded to us-east-1 (and non-self-service resets it on
+# every apply), and there is no EKAI_BUCKET placeholder.
 
 # Let's Encrypt registration email. cluster_issuer_name defaults to
 # "letsencrypt-prod" (a real, browser-trusted cert) -- left unset here. Only

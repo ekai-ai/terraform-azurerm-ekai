@@ -161,6 +161,17 @@ data "azurerm_key_vault_secret" "db_credentials" {
 locals {
   master_creds                = local.self_service ? {} : jsondecode(data.azurerm_key_vault_secret.db_credentials[0].value)
   argocd_admin_password_plain = local.self_service ? random_password.argocd_admin[0].result : local.master_creds["argocd_admin_password_plain"]
+
+  # Keys an earlier version of this module wrote while MinIO was still
+  # deployed. master_creds is read back from the existing secret on every
+  # apply, so without this filter they'd stay in it forever. EKAI_BUCKET is
+  # only dropped while USE_MINIO is still "true" -- once it's "false" the
+  # client may have set it to a real bucket on purpose.
+  master_creds_without_minio = {
+    for k, v in local.master_creds : k => v
+    if !contains(["MINIO_ENDPOINT_URL", "MINIO_ACCESS_KEY", "MINIO_SECRET_ACCESS_KEY"], k)
+    && !(k == "EKAI_BUCKET" && try(local.master_creds["USE_MINIO"], "") == "true")
+  }
 }
 
 # Self-service has no pre-existing secret to adopt -- a brand-new vault has
@@ -361,7 +372,7 @@ resource "azurerm_key_vault_secret" "master_non_self_service" {
   key_vault_id = var.key_vault_id
   content_type = "application/json"
 
-  value = jsonencode(merge(local.master_creds, local.platform_derived_values))
+  value = jsonencode(merge(local.master_creds_without_minio, local.platform_derived_values))
 
   tags = local.common_tags
 

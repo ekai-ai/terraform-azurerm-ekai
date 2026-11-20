@@ -252,7 +252,7 @@ files identically.
 | `redis_replica_count` | `3` | Redis read-replica pod count |
 | `redis_persistence_size` / `redis_storage_class` | `"8Gi"` / `"managed-premium"` | Redis PVC sizing |
 | `neo4j_namespace` / `neo4j_chart_version` | `"neo4j"` / `"5.26.0"` | Neo4j namespace + chart version — always deployed, no toggle |
-| `neo4j_storage_size` / `neo4j_storage_class` | `"20Gi"` / `"managed-premium"` | Neo4j PVC sizing |
+| `neo4j_storage_size` / `neo4j_storage_class` | `"20Gi"` / `null` (AKS's default StorageClass) | Neo4j PVC sizing; the class can't change once the PVC exists |
 | `neo4j_memory_request` / `_limit`, `neo4j_cpu_request` / `_limit` | `"2Gi"`/`"4Gi"`, `"500m"`/`"2"` | Neo4j pod sizing |
 | `minio_namespace` / `minio_chart_version` | `"minio"` / `"17.0.21"` | MinIO namespace + Bitnami chart version |
 | `minio_replicas` / `minio_mode` | `4` / `"distributed"` | MinIO replica count + mode — 4 replicas × 50Gi default = 200Gi total storage |

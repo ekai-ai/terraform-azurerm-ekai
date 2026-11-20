@@ -63,7 +63,6 @@ module "cicd" {
   secrets_name        = var.secrets_name
   namespace           = var.namespace
   tls_name            = var.tls_name
-  argocd_ingress_host = var.argocd_ingress_host
   cicd_provider       = var.cicd_provider
   tags                = var.tags
 

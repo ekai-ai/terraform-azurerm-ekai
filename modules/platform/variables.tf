@@ -20,10 +20,6 @@ variable "resource_group_name" {
   type = string
 }
 
-variable "region" {
-  type = string
-}
-
 # --- Key Vault (sourced from the cluster submodule's output) ---
 variable "key_vault_id" {
   type = string
@@ -202,8 +198,9 @@ variable "neo4j_storage_size" {
 }
 
 variable "neo4j_storage_class" {
-  type    = string
-  default = "managed-premium"
+  description = "StorageClass for the Neo4j data volume. null uses AKS's default StorageClass. A PVC's class can't change after it's created, so don't set this on an install that already has one."
+  type        = string
+  default     = null
 }
 
 variable "neo4j_memory_request" {

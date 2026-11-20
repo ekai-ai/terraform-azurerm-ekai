@@ -50,11 +50,6 @@ variable "tls_name" {
   default     = null
 }
 
-variable "argocd_ingress_host" {
-  type    = string
-  default = null
-}
-
 variable "cicd_provider" {
   type    = string
   default = "none"

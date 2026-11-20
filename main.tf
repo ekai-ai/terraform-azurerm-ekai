@@ -58,7 +58,6 @@ module "bootstrap" {
   source = "./modules/bootstrap"
 
   env_name            = var.env_name
-  region              = var.region
   resource_group_name = var.resource_group_name
   dns_zone            = var.dns_zone
   manage_dns_zone     = var.manage_dns_zone
@@ -89,7 +88,6 @@ module "cluster" {
   app_node_pool_min_count             = var.app_node_pool_min_count
   app_node_pool_max_count             = var.app_node_pool_max_count
   log_analytics_workspace_name        = var.log_analytics_workspace_name
-  solution_plan_map                   = var.solution_plan_map
   postgresql_version                  = var.postgresql_version
   postgres_flexible_server_sku_name   = var.postgres_flexible_server_sku_name
   postgres_flexible_server_storage_mb = var.postgres_flexible_server_storage_mb
@@ -112,7 +110,6 @@ module "platform" {
   subscription_id              = var.subscription_id
   env_name                     = var.env_name
   resource_group_name          = var.resource_group_name
-  region                       = var.region
   secrets_name                 = local.secrets_name
   cicd_provider                = var.cicd_provider
   namespace                    = var.namespace

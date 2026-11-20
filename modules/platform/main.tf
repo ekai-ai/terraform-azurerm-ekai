@@ -8,11 +8,11 @@
 locals {
   self_service = var.cicd_provider == "none"
 
-  common_tags = {
+  common_tags = merge(var.tags, {
     env       = var.env_name
     layer     = "platform"
     managedBy = "terraform"
-  }
+  })
 }
 
 # ── ArgoCD admin password — self-service generates it directly; otherwise

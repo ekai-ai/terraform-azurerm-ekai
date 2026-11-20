@@ -213,19 +213,6 @@ variable "log_analytics_workspace_name" {
   type = string
 }
 
-variable "solution_plan_map" {
-  type = map(object({
-    product   = string
-    publisher = string
-  }))
-  default = {
-    ContainerInsights = {
-      product   = "OMSGallery/ContainerInsights"
-      publisher = "Microsoft"
-    }
-  }
-}
-
 variable "postgresql_version" {
   type    = string
   default = "15"

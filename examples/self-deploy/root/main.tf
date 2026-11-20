@@ -92,7 +92,6 @@ module "infra" {
   app_node_pool_min_count             = var.app_node_pool_min_count
   app_node_pool_max_count             = var.app_node_pool_max_count
   log_analytics_workspace_name        = var.log_analytics_workspace_name
-  solution_plan_map                   = var.solution_plan_map
   postgresql_version                  = var.postgresql_version
   postgres_flexible_server_sku_name   = var.postgres_flexible_server_sku_name
   postgres_flexible_server_storage_mb = var.postgres_flexible_server_storage_mb

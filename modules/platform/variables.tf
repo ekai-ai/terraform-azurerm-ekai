@@ -20,10 +20,6 @@ variable "resource_group_name" {
   type = string
 }
 
-variable "region" {
-  type = string
-}
-
 # --- Key Vault (sourced from the cluster submodule's output) ---
 variable "key_vault_id" {
   type = string

@@ -117,4 +117,8 @@ provider "kubectl" {
   client_key             = base64decode(module.cluster.aks_client_key)
   cluster_ca_certificate = base64decode(module.cluster.aks_cluster_ca_certificate)
   load_config_file       = false
+  # These come from the cluster this same apply creates, so they're unknown on
+  # a new env's first plan. alekc/kubectl v3 fails provider configure on that
+  # unless the client is built lazily (gavinbunney only logged a warning).
+  lazy_load = true
 }

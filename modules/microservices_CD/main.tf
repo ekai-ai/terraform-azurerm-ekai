@@ -151,8 +151,7 @@ resource "kubectl_manifest" "image_updater" {
     }
   })
 
-  force_conflicts = true
-  depends_on      = [argocd_application.ekai_frontend]
+  depends_on = [argocd_application.ekai_frontend]
 }
 
 # On destroy: ArgoCD prunes all K8s resources including Ingresses, nginx-ingress

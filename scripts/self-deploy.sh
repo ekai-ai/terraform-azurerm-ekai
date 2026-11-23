@@ -408,10 +408,24 @@ fi
 # examples/self-deploy/{root,cicd} — the repo root and cicd/ directories are
 # pure Terraform modules now (no backend block of their own; see
 # providers.tf / cicd/providers.tf), so they can't be applied directly.
+# One-time, idempotent: state written before the kubectl provider moved from
+# the unmaintained gavinbunney/kubectl to its maintained alekc/kubectl fork
+# still names the old provider. A no-op on already-migrated state. Skipped
+# when the state has no resources yet (a new env): state subcommands exit 1
+# with "No state file was found!" there, and set -e would end the script.
+# Run from the config directory, right after its terraform init.
+migrate_kubectl_provider() {
+  if [[ -n "$(terraform state list 2>/dev/null)" ]]; then
+    terraform state replace-provider -auto-approve \
+      registry.terraform.io/gavinbunney/kubectl registry.terraform.io/alekc/kubectl >/dev/null
+  fi
+}
+
 echo
 echo "════════ terraform apply (bootstrap + cluster + platform) ════════"
 cd "${REPO_ROOT}/examples/self-deploy/root"
 terraform init -upgrade -reconfigure -backend-config="../../../env/backend-${ENV}.tfbackend"
+migrate_kubectl_provider
 terraform apply -auto-approve -compact-warnings -var-file="../../../env/${ENV}.tfvars"
 
 # ── DNS delegation — only when Terraform just created a NEW DNS zone.
@@ -463,6 +477,7 @@ echo
 echo "════════ terraform apply (cicd) ════════"
 cd "${REPO_ROOT}/examples/self-deploy/cicd"
 terraform init -upgrade -reconfigure -backend-config="../../../env/backend-${ENV}-cicd.tfbackend"
+migrate_kubectl_provider
 terraform apply -auto-approve -compact-warnings -var-file="../../../env/${ENV}.tfvars"
 
 # ── Wait for the wildcard TLS certificate to actually be issued ──────────────

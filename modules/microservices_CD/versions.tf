@@ -13,8 +13,8 @@ terraform {
       version = "~> 0.12"
     }
     kubectl = {
-      source  = "gavinbunney/kubectl"
-      version = "~> 1.14.0"
+      source  = "alekc/kubectl"
+      version = "~> 3.0"
     }
     azurerm = {
       source  = "hashicorp/azurerm"

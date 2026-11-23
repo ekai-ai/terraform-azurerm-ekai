@@ -101,13 +101,6 @@ variable "log_analytics_workspace_name" {
   type = string
 }
 
-variable "solution_plan_map" {
-  type = map(object({
-    product   = string
-    publisher = string
-  }))
-}
-
 # --- PostgreSQL ---
 variable "postgresql_version" {
   type = string

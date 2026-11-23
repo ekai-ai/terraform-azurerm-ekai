@@ -213,19 +213,6 @@ variable "log_analytics_workspace_name" {
   type = string
 }
 
-variable "solution_plan_map" {
-  type = map(object({
-    product   = string
-    publisher = string
-  }))
-  default = {
-    ContainerInsights = {
-      product   = "OMSGallery/ContainerInsights"
-      publisher = "Microsoft"
-    }
-  }
-}
-
 variable "postgresql_version" {
   type    = string
   default = "15"
@@ -365,8 +352,9 @@ variable "neo4j_storage_size" {
 }
 
 variable "neo4j_storage_class" {
-  type    = string
-  default = "managed-premium"
+  description = "StorageClass for the Neo4j data volume. null uses AKS's default StorageClass. A PVC's class can't change after it's created, so don't set this on an install that already has one."
+  type        = string
+  default     = null
 }
 
 variable "neo4j_memory_request" {

@@ -36,7 +36,6 @@ module "log_analytics_workspace" {
   name                = var.log_analytics_workspace_name
   region              = var.region
   resource_group_name = var.resource_group_name
-  solution_plan_map   = var.solution_plan_map
   tags                = local.common_tags
 }
 
@@ -83,7 +82,6 @@ module "aks" {
   app_node_pool_max_count    = var.app_node_pool_max_count
   dns_zone                   = var.dns_zone
   env_name                   = var.env_name
-  workspace_name             = module.log_analytics_workspace.workspace_name
   tags                       = local.common_tags
   # Explicit dependency on the propagation wait — the implicit one via
   # `log_analytics_workspace_id` isn't enough; Terraform considers the value

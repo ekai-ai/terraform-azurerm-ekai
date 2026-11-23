@@ -5,15 +5,24 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   terraform-validate:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         dir: [., examples/self-deploy/root, examples/self-deploy/cicd]
+        # The oldest Terraform README.md supports, plus the current release.
+        # The oldest one is what catches config only newer versions accept.
+        terraform: ["1.7.5", "1.17.2"]
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ matrix.terraform }}
       - run: terraform init -backend=false -input=false
         working-directory: ${{ matrix.dir }}
       - run: terraform validate

@@ -119,7 +119,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
 }
 
 # App (user) node pool — all workloads land here: platform tools (ArgoCD,
-# nginx, ESO, cert-manager, Redis, MinIO) and application pods (ekai-*).
+# nginx, ESO, cert-manager, Redis) and application pods (ekai-*).
 # Kept separate from the system pool so cluster churn never competes with
 # business workloads for capacity.
 resource "azurerm_kubernetes_cluster_node_pool" "apps" {

@@ -103,13 +103,3 @@ output "acr_name" {
 output "acr_login_server" {
   value = local.acr_login_server
 }
-
-output "mirrored_images" {
-  description = "Map of mirrored Bitnami images. Empty when create_acr = false (images pre-exist in the external registry)."
-  value       = var.create_acr ? module.acr_image_mirror[0].mirrored_images : {}
-}
-
-output "mirrored_image_tags" {
-  description = "Map of mirrored image keys → their dest_tag. Empty when create_acr = false."
-  value       = var.create_acr ? module.acr_image_mirror[0].mirrored_image_tags : {}
-}

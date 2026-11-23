@@ -93,3 +93,7 @@ output "argocd_admin_password_plaintext" {
 output "argocd_ingress_host" {
   value = module.infra.argocd_ingress_host
 }
+
+output "master_secret_id" {
+  value = module.infra.master_secret_id
+}

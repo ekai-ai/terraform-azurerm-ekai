@@ -51,3 +51,8 @@ output "minio_default_buckets" {
 output "tls_name" {
   value = var.tls_name
 }
+
+output "master_secret_id" {
+  description = "Versioned ID of the client's pre-seeded master secret, non-self-service only (null otherwise). examples/self-deploy/root imports master_non_self_service with it."
+  value       = one(data.azurerm_key_vault_secret.db_credentials[*].id)
+}

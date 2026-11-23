@@ -12,9 +12,10 @@
 #     reads them from the master Key Vault secret (var.secrets_name) — since
 #     the vault is now created in THIS SAME apply rather than pre-existing,
 #     a non-self-service deploy needs a two-step apply: first apply creates
-#     the empty vault (e.g. `terraform apply -target=module.cluster.module.key_vault`),
-#     the client seeds var.secrets_name with DB creds + github_token/
-#     username/email, then a full `terraform apply` proceeds normally. This
+#     the empty vault (from examples/self-deploy/root: `terraform apply
+#     -target=module.infra.module.cluster.module.key_vault`), the client
+#     seeds var.secrets_name with DB creds + github_token/username/email,
+#     then a full `terraform apply` proceeds normally. This
 #     mirrors the original codebase's own manual pre-seeding step (see
 #     docs/CLIENT-ONBOARDING-AZURE.md in devops/azure-terraform) -- just
 #     shifted one step later now that bootstrap+cluster+platform share a

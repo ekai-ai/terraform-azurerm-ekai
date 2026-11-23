@@ -14,6 +14,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 
 terraform {
+  # 1.7+ for for_each on the import block at the bottom of this file.
   required_version = ">= 1.7"
 
   # Partial backend config — provide per-environment via -backend-config flag.
@@ -132,4 +133,18 @@ module "infra" {
   minio_enable_ingress                = var.minio_enable_ingress
   minio_resources                     = var.minio_resources
   secret_value_overrides              = var.secret_value_overrides
+}
+
+# Non-self-service only (cicd_provider != "none"): the client seeds the master
+# Key Vault secret before the first full apply (see modules/cluster's file
+# header), so module.infra has to adopt it instead of creating it. for_each is
+# empty for self-service, so nothing is imported there.
+#
+# This has to stay in the root module: before Terraform 1.16, an import block
+# in a child module either fails `terraform init` or is silently skipped,
+# depending on the version.
+import {
+  for_each = var.cicd_provider == "none" ? [] : [1]
+  to       = module.infra.module.platform.azurerm_key_vault_secret.master_non_self_service[0]
+  id       = module.infra.master_secret_id
 }

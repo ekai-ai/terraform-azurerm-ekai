@@ -1,5 +1,5 @@
 # ──────────────────────────────────────────────────────────────────────────────
-# Root outputs — two audiences:
+# Root outputs — three audiences:
 #
 #   1. End-state values a client actually wants to see after `terraform apply`
 #      (argocd_url/admin creds, DNS info, aks_cluster_name, region).
@@ -10,6 +10,9 @@
 #      argocd_admin_password_plaintext) — these exist here ONLY because
 #      ./cicd/ needs them; a human applying this config alone wouldn't
 #      otherwise care.
+#
+#   3. master_secret_id, read only by examples/self-deploy/root's import
+#      block (non-self-service adopts the pre-seeded master secret with it).
 # ──────────────────────────────────────────────────────────────────────────────
 
 output "argocd_url" {
@@ -120,4 +123,13 @@ output "argocd_admin_password_plaintext" {
 output "argocd_ingress_host" {
   description = "ArgoCD ingress hostname. Read by ./cicd/providers.tf's argocd provider config."
   value       = local.argocd_ingress_host
+}
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Consumed by examples/self-deploy/root's import block only
+# ═══════════════════════════════════════════════════════════════════════════
+
+output "master_secret_id" {
+  description = "Versioned ID of the pre-seeded master Key Vault secret (cicd_provider != \"none\" only, null otherwise)."
+  value       = module.platform.master_secret_id
 }

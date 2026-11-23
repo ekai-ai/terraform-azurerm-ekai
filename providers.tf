@@ -15,11 +15,10 @@
 # part of this root anymore. See main.tf's file header for the full reasoning
 # on why cicd stays a separate apply.
 #
-# required_version — >= 1.7 (the strictest of the 3 submodules' own pins;
-# modules/platform's conditional Key Vault secret `import` block needs
-# Terraform 1.7+ for `for_each` on an import block). Terraform checks each
-# submodule's own required_version block too, so this mainly documents the
-# real minimum up front.
+# required_version — >= 1.7, the minimum README.md lists. The submodules
+# only need 1.5; the 1.7 comes from examples/self-deploy/root (the config this
+# module is applied through), whose import block uses for_each. CI validates
+# with 1.7.5 so this stays true.
 # ──────────────────────────────────────────────────────────────────────────────
 
 terraform {

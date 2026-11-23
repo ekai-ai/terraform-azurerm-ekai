@@ -26,28 +26,6 @@ output "redis_credentials" {
   }
 }
 
-output "minio_endpoint" {
-  value = module.minio.minio_endpoint
-}
-
-output "minio_internal_endpoint" {
-  value = module.minio.minio_internal_endpoint
-}
-
-output "minio_root_user" {
-  value     = module.minio.minio_root_user
-  sensitive = true
-}
-
-output "minio_root_password" {
-  value     = module.minio.minio_root_password
-  sensitive = true
-}
-
-output "minio_default_buckets" {
-  value = var.minio_default_buckets
-}
-
 output "tls_name" {
   value = var.tls_name
 }

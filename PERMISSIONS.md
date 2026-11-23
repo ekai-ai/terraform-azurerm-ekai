@@ -76,7 +76,7 @@ this two-Action custom role and grants only that.
 | | `self-deploy.sh` Step 3 | `az ad sp create-for-rbac` / `credential reset` for the deployer SP (Entra default setting, not this RBAC role, is what actually gates this — see above) |
 | | `self-deploy.sh` Step 3 | `az role assignment create` granting the deployer SP `Owner` on the resource group |
 | | `self-deploy.sh` Step 3 (optional) | `az role definition create` + `az role assignment create` for the Key Vault purge role, subscription scope, only when `purge_vault_on_destroy = true` |
-| `Owner` (deployer SP, one resource group) | both Terraform applies (`examples/self-deploy/{root,cicd}`) | everything the repo provisions: VNet, AKS, PostgreSQL, Key Vault + its RBAC, ACR + AcrPull, DNS zone, the UAMIs for ESO/cert-manager, ArgoCD, MinIO, ... |
+| `Owner` (deployer SP, one resource group) | both Terraform applies (`examples/self-deploy/{root,cicd}`) | everything the repo provisions: VNet, AKS, PostgreSQL, Key Vault + its RBAC, ACR + AcrPull, DNS zone, the UAMIs for ESO/cert-manager, ArgoCD, ... |
 | Key Vault purge role (deployer SP, subscription, optional) | `terraform destroy` via the `azurerm` provider's `purge_soft_delete_on_destroy` feature flag | purges the soft-deleted vault immediately on destroy instead of leaving it in Azure's normal 7-day soft-delete window |
 
 ## Why Owner, not a narrower custom role, for the bootstrapping identity

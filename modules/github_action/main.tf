@@ -238,12 +238,12 @@ resource "github_actions_environment_secret" "github_token" {
 }
 
 # Master Key Vault secret merge happens in Layer 03 (03-platform/main.tf), where
-# all platform-derived values (DATABASE_URL, REDIS_*, MINIO_*) come together.
+# all platform-derived values (DATABASE_URL, REDIS_*) come together.
 # This module focuses on CI/CD (federated identity, GitHub workflow files, repo secrets).
 #
 # Per-service Key Vault secrets (`<service>-env`) are created MANUALLY by the
 # client AFTER infra deploy — see CLIENT-ONBOARDING-AZURE.md and CLIENT-HANDOVER-AZURE.md.
-# Client copies DATABASE_URL / REDIS_* / MINIO_* from the master secret into
+# Client copies DATABASE_URL / REDIS_* from the master secret into
 # each per-service secret as needed.
 
 # ═════════════════════════════════════════════════════════════════════════════

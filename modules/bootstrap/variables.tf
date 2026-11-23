@@ -3,11 +3,6 @@ variable "env_name" {
   type        = string
 }
 
-variable "region" {
-  description = "Azure region (e.g. northeurope). Must match the RG region."
-  type        = string
-}
-
 variable "resource_group_name" {
   description = "Pre-existing RG (created out-of-band by scripts/init-state-backend.sh)."
   type        = string

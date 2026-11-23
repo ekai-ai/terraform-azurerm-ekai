@@ -41,6 +41,10 @@ output "key_vault_name" {
   value = module.infra.key_vault_name
 }
 
+output "secrets_name" {
+  value = module.infra.secrets_name
+}
+
 output "tls_name" {
   value = module.infra.tls_name
 }

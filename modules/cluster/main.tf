@@ -37,7 +37,6 @@ module "log_analytics_workspace" {
   name                = var.log_analytics_workspace_name
   region              = var.region
   resource_group_name = var.resource_group_name
-  solution_plan_map   = var.solution_plan_map
   tags                = local.common_tags
 }
 
@@ -84,7 +83,6 @@ module "aks" {
   app_node_pool_max_count    = var.app_node_pool_max_count
   dns_zone                   = var.dns_zone
   env_name                   = var.env_name
-  workspace_name             = module.log_analytics_workspace.workspace_name
   tags                       = local.common_tags
   # Explicit dependency on the propagation wait — the implicit one via
   # `log_analytics_workspace_id` isn't enough; Terraform considers the value
@@ -201,38 +199,4 @@ locals {
   acr_id           = var.create_acr ? module.acr[0].id : data.azurerm_container_registry.existing[0].id
   acr_name         = var.create_acr ? module.acr[0].name : data.azurerm_container_registry.existing[0].name
   acr_login_server = var.create_acr ? module.acr[0].login_server : data.azurerm_container_registry.existing[0].login_server
-}
-
-# ── Mirror Bitnami images into the client's ACR ─────────────────────────────
-# Skipped when create_acr = false — images are expected to already exist in
-# the provided external registry.
-module "acr_image_mirror" {
-  count    = var.create_acr ? 1 : 0
-  source   = "../acr_image_mirror"
-  acr_name = local.acr_name
-
-  images = {
-    minio = {
-      source    = "docker.io/bitnamilegacy/minio:2025.7.23-debian-12-r3"
-      dest_repo = "bitnami/minio"
-      dest_tag  = "2025.7.23-debian-12-r3"
-    }
-    minio_client = {
-      # Bitnami rotates `bitnamilegacy/*` tags. Verify before bumping:
-      #   curl -s 'https://hub.docker.com/v2/repositories/bitnamilegacy/minio-client/tags/?page_size=20&ordering=last_updated' \
-      #     | jq -r '.results[].name' | grep -v sha256
-      source    = "docker.io/bitnamilegacy/minio-client:2025.7.21-debian-12-r3"
-      dest_repo = "bitnami/minio-client"
-      dest_tag  = "2025.7.21-debian-12-r3"
-    }
-    minio_object_browser = {
-      source    = "docker.io/bitnamilegacy/minio-object-browser:2.0.2-debian-12-r3"
-      dest_repo = "bitnami/minio-object-browser"
-      dest_tag  = "2.0.2-debian-12-r3"
-    }
-    # No redis_stack entry -- modules/redis no longer swaps in the
-    # redis/redis-stack-server image (see that module's file header for why:
-    # it silently loses every RediSearch/RedisJSON/etc. module under
-    # Bitnami's chart), so there's nothing of that kind left to mirror.
-  }
 }

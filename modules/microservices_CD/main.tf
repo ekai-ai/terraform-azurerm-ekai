@@ -171,7 +171,7 @@ resource "time_sleep" "wait_for_argocd_prune" {
 # IP assigned). This apply runs as a SEPARATE, later `terraform apply` from
 # the one that created nginx-ingress (see cicd/main.tf's file header on why
 # cicd can't be the same apply) -- normally there's already been several
-# minutes of platform work (Postgres init, Redis, MinIO, Neo4j, ArgoCD) by
+# minutes of platform work (Postgres init, Redis, Neo4j, ArgoCD) by
 # the time this apply starts, which is usually enough, but nothing actually
 # guarantees it if this apply is ever re-run in isolation shortly after
 # platform finishes. Matches terraform-google-ekai's modules/ingress_controller

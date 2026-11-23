@@ -8,11 +8,11 @@
 locals {
   self_service = var.cicd_provider == "none"
 
-  common_tags = {
+  common_tags = merge(var.tags, {
     env       = var.env_name
     layer     = "platform"
     managedBy = "terraform"
-  }
+  })
 }
 
 # ── ArgoCD admin password — self-service generates it directly; otherwise
@@ -146,35 +146,6 @@ module "neo4j" {
 # KEDA themselves -- Azure's own managed add-on already covers the same
 # ekai-saas chart ScaledObject use case with nothing further needed here.
 
-# ── MinIO (distributed mode + bucket Job, images mirrored to ACR) ──────────
-module "minio" {
-  source           = "../minio"
-  tls_name         = var.tls_name
-  minio_namespace  = var.minio_namespace
-  minio_host       = var.minio_host
-  chart_version    = var.minio_chart_version
-  minio_mode       = var.minio_mode
-  minio_replicas   = var.minio_replicas
-  persistence_size = var.minio_persistence_size
-  storage_class    = var.minio_storage_class
-  default_buckets  = var.minio_default_buckets
-  enable_ingress   = var.minio_enable_ingress
-  resources        = var.minio_resources
-  tags             = local.common_tags
-  # Pull all 3 MinIO images (server, client, console) from client's ACR
-  # — mirrored at cluster-submodule apply time. No Docker Hub dependency at
-  # runtime. Tags come from the cluster submodule's mirrored_image_tags
-  # output so chart-default and ACR-mirrored tags can never drift apart.
-  image_registry           = var.acr_login_server
-  image_repository_main    = "bitnami/minio"
-  image_repository_client  = "bitnami/minio-client"
-  image_repository_console = "bitnami/minio-object-browser"
-  image_tag_main           = var.mirrored_image_tags["minio"]
-  image_tag_client         = var.mirrored_image_tags["minio_client"]
-  image_tag_console        = var.mirrored_image_tags["minio_object_browser"]
-  depends_on               = [module.nginx_ingress, module.cert-manager]
-}
-
 # ── Master Key Vault secret — self-service: nothing to adopt, Terraform
 #    creates it fresh. Non-self-service: the client pre-populates this secret
 #    (see modules/cluster's file header for the two-step-apply note this now
@@ -190,17 +161,26 @@ data "azurerm_key_vault_secret" "db_credentials" {
 locals {
   master_creds                = local.self_service ? {} : jsondecode(data.azurerm_key_vault_secret.db_credentials[0].value)
   argocd_admin_password_plain = local.self_service ? random_password.argocd_admin[0].result : local.master_creds["argocd_admin_password_plain"]
+
+  # Keys an earlier version of this module wrote while MinIO was still
+  # deployed. master_creds is read back from the existing secret on every
+  # apply, so without this filter they'd stay in it forever. EKAI_BUCKET is
+  # only dropped while USE_MINIO is still "true" -- once it's "false" the
+  # client may have set it to a real bucket on purpose.
+  master_creds_without_minio = {
+    for k, v in local.master_creds : k => v
+    if !contains(["MINIO_ENDPOINT_URL", "MINIO_ACCESS_KEY", "MINIO_SECRET_ACCESS_KEY"], k)
+    && !(k == "EKAI_BUCKET" && try(local.master_creds["USE_MINIO"], "") == "true")
+  }
 }
 
 # ── Self-service only: every value a fresh install needs that Terraform can
 # generate or derive for certain. Mirrors terraform-google-ekai's
 # modules/cicd/main.tf generation locals almost exactly -- Azure's
-# self-service shape (nginx-ingress, in-cluster MinIO, no native cloud
-# object storage path in the app) is architecturally closer to GCP's than to
-# AWS's ALB/S3 shape. Field names/values below are the ones verified against
-# real ekai-mono source this session (not Azure's own pre-existing
-# MINIO_ENDPOINT/MINIO_ROOT_USER/MINIO_ROOT_PASSWORD naming above, which
-# predates this and is left untouched for non-self-service fidelity).
+# self-service shape (nginx-ingress, no native cloud object storage path in
+# the app) is architecturally closer to GCP's than to AWS's ALB/S3 shape.
+# Field names/values below are the ones verified against real ekai-mono
+# source this session.
 resource "random_id" "encryption_key" {
   count       = local.self_service ? 1 : 0
   byte_length = 32
@@ -299,37 +279,29 @@ locals {
   # Shared by both resources below -- the always-fresh, platform-derived
   # values every apply recomputes regardless of self_service.
   #
-  # MINIO_ENDPOINT_URL/MINIO_ACCESS_KEY/MINIO_SECRET_ACCESS_KEY/EKAI_BUCKET/
-  # AWS_REGION are the REAL keys the app reads -- confirmed directly against
-  # ekai-mono source (services/platform/apps/backend/src/{aws,s3}/*.service.ts,
-  # services/ai-core/ekai/aws/s3/handlers.py all read exactly these). The
-  # devops/azure-terraform original this was ported from instead wrote
-  # MINIO_ENDPOINT/MINIO_ROOT_USER/MINIO_ROOT_PASSWORD, which no app code
-  # anywhere reads -- a pre-existing latent bug in that repo, fixed here to
-  # match terraform-google-ekai's verified-correct naming. Same for
-  # REDIS_URI (not REDIS_URL -- also unread by any app code either way,
-  # confirmed via ekai-mono, so purely a naming-consistency fix, not a
-  # functional one). AWS_REGION is a hardcoded dummy, not var.region: the
-  # AWS SDK's S3Client requires a syntactically valid AWS region string
-  # before it'll even construct (even though MinIO itself never checks it),
-  # and an Azure region name like "northeurope" doesn't pass that format
-  # check -- same reasoning as terraform-google-ekai's identical hardcode.
+  # MinIO removed -- no in-cluster or cloud-native file storage is wired for
+  # Azure anymore. The backend's AwsService still constructs an
+  # @aws-sdk/client-s3 S3Client unconditionally and requires a syntactically
+  # valid AWS region string before it'll even construct (confirmed directly
+  # against ekai-mono source), so AWS_REGION stays set to a hardcoded dummy
+  # (an Azure region name like "northeurope" doesn't pass that format check)
+  # to avoid crashing the whole pod over an unrelated SDK requirement --
+  # actual file-storage calls (no EKAI_BUCKET/AWS_ACCESS_KEY_ID) are expected
+  # to fail at runtime. Same reasoning as terraform-google-ekai.
+  # REDIS_URI (not REDIS_URL -- unread by any app code either way, confirmed
+  # via ekai-mono, so purely a naming-consistency fix, not a functional one).
   platform_derived_values = {
-    DATABASE_URL            = "postgresql://${var.backend_db_username}:${var.backend_db_password}@${var.postgres_fqdn}:5432/${var.backend_db_name}"
-    REDIS_HOST              = module.redis.redis_host
-    REDIS_PORT              = tostring(module.redis.redis_port)
-    REDIS_USERNAME          = "default"
-    REDIS_PASSWORD          = module.redis.redis_password
-    REDIS_URI               = module.redis.redis_url
-    USE_MINIO               = "true"
-    MINIO_ENDPOINT_URL      = module.minio.minio_internal_endpoint
-    MINIO_ACCESS_KEY        = module.minio.minio_root_user
-    MINIO_SECRET_ACCESS_KEY = module.minio.minio_root_password
-    EKAI_BUCKET             = var.minio_default_buckets[0]
-    AWS_REGION              = "us-east-1"
-    NEO4J_URI               = module.neo4j.bolt_uri
-    NEO4J_USERNAME          = "neo4j"
-    NEO4J_PASSWORD          = module.neo4j.neo4j_password
+    DATABASE_URL   = "postgresql://${var.backend_db_username}:${var.backend_db_password}@${var.postgres_fqdn}:5432/${var.backend_db_name}"
+    REDIS_HOST     = module.redis.redis_host
+    REDIS_PORT     = tostring(module.redis.redis_port)
+    REDIS_USERNAME = "default"
+    REDIS_PASSWORD = module.redis.redis_password
+    REDIS_URI      = module.redis.redis_url
+    USE_MINIO      = "false"
+    AWS_REGION     = "us-east-1"
+    NEO4J_URI      = module.neo4j.bolt_uri
+    NEO4J_USERNAME = "neo4j"
+    NEO4J_PASSWORD = module.neo4j.neo4j_password
   }
 }
 
@@ -368,7 +340,7 @@ resource "azurerm_key_vault_secret" "master_self_service" {
 
   tags = local.common_tags
 
-  depends_on = [module.redis, module.minio, module.neo4j]
+  depends_on = [module.redis, module.neo4j]
 }
 
 # Non-self-service: re-reads the client's current secret every apply
@@ -388,9 +360,9 @@ resource "azurerm_key_vault_secret" "master_non_self_service" {
   key_vault_id = var.key_vault_id
   content_type = "application/json"
 
-  value = jsonencode(merge(local.master_creds, local.platform_derived_values))
+  value = jsonencode(merge(local.master_creds_without_minio, local.platform_derived_values))
 
   tags = local.common_tags
 
-  depends_on = [module.redis, module.minio, module.neo4j]
+  depends_on = [module.redis, module.neo4j]
 }

@@ -81,17 +81,6 @@ variable "log_analytics_workspace_id" {
   type        = string
 }
 
-variable "log_analytics_workspace_location" {
-  description = "Override location for the Log Analytics workspace; defaults to the cluster region."
-  type        = string
-  default     = null
-}
-
-variable "workspace_name" {
-  description = "Name of the Log Analytics workspace (used for diagnostic setting targeting)."
-  type        = string
-}
-
 variable "dns_zone" {
   description = "DNS zone that cert-manager uses via the AKS workload identity federated credential."
   type        = string

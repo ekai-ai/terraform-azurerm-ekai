@@ -56,6 +56,11 @@ output "key_vault_name" {
   value       = module.cluster.key_vault_name
 }
 
+output "secrets_name" {
+  description = "Name of the master Key Vault secret actually used (whichever var.secrets_name was set to, or the generated default). scripts/self-deploy.sh uses this to clean up leftover MinIO settings from installs that predate MinIO's removal."
+  value       = local.secrets_name
+}
+
 output "tls_name" {
   description = "Name of the wildcard TLS Certificate/Secret actually used (whichever var.tls_name was set to, or the generated default). scripts/self-deploy.sh polls `kubectl get certificate <this> -n cert-manager` to confirm issuance."
   value       = local.tls_name

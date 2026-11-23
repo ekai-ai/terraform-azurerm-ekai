@@ -122,7 +122,7 @@ spec:
     annotations:
       reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
       reflector.v1.k8s.emberstack.com/reflection-auto-enabled: "true"
-      reflector.v1.k8s.emberstack.com/reflection-auto-namespaces: "${var.namespace},minio,argocd"
+      reflector.v1.k8s.emberstack.com/reflection-auto-namespaces: "${var.namespace},argocd"
 YAML
   depends_on = [kubectl_manifest.cluster_issuer_staging, kubectl_manifest.cluster_issuer_prod]
 }

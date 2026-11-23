@@ -13,14 +13,6 @@ variable "name" {
   type        = string
 }
 
-variable "solution_plan_map" {
-  description = "Log Analytics solutions to install (keyed by solution name → publisher/product)."
-  type = map(object({
-    product   = string
-    publisher = string
-  }))
-}
-
 variable "tags" {
   description = "Tags applied to the workspace and solutions."
   type        = map(string)

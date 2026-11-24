@@ -6,15 +6,11 @@
 # reads; root now gets the same values directly from module.cluster's
 # outputs.
 #
-# required_version is >= 1.7 (not just >= 1.5 like the other submodules): the
-# master Key Vault secret's conditional `import` block below uses `for_each`
-# on the import block itself, which needs Terraform 1.7+.
-#
 # required_providers is kept here too — harmless, and documents this
 # submodule's own provider requirements independent of root.
 
 terraform {
-  required_version = ">= 1.7"
+  required_version = ">= 1.5"
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
@@ -33,8 +29,8 @@ terraform {
       version = "~> 2.0"
     }
     kubectl = {
-      source  = "gavinbunney/kubectl"
-      version = "~> 1.14.0"
+      source  = "alekc/kubectl"
+      version = "~> 3.0"
     }
   }
 }

@@ -15,11 +15,10 @@
 # part of this root anymore. See main.tf's file header for the full reasoning
 # on why cicd stays a separate apply.
 #
-# required_version — >= 1.7 (the strictest of the 3 submodules' own pins;
-# modules/platform's conditional Key Vault secret `import` block needs
-# Terraform 1.7+ for `for_each` on an import block). Terraform checks each
-# submodule's own required_version block too, so this mainly documents the
-# real minimum up front.
+# required_version — >= 1.7, the minimum README.md lists. The submodules
+# only need 1.5; the 1.7 comes from examples/self-deploy/root (the config this
+# module is applied through), whose import block uses for_each. CI validates
+# with 1.7.5 so this stays true.
 # ──────────────────────────────────────────────────────────────────────────────
 
 terraform {
@@ -53,8 +52,8 @@ terraform {
       version = "~> 2.0"
     }
     kubectl = {
-      source  = "gavinbunney/kubectl"
-      version = "~> 1.14.0"
+      source  = "alekc/kubectl"
+      version = "~> 3.0"
     }
   }
 }
@@ -118,4 +117,8 @@ provider "kubectl" {
   client_key             = base64decode(module.cluster.aks_client_key)
   cluster_ca_certificate = base64decode(module.cluster.aks_cluster_ca_certificate)
   load_config_file       = false
+  # These come from the cluster this same apply creates, so they're unknown on
+  # a new env's first plan. alekc/kubectl v3 fails provider configure on that
+  # unless the client is built lazily (gavinbunney only logged a warning).
+  lazy_load = true
 }

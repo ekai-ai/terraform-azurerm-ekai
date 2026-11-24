@@ -174,23 +174,6 @@ locals {
   }
 }
 
-# Self-service has no pre-existing secret to adopt -- a brand-new vault has
-# nothing in it yet. Non-self-service adopts the client's pre-seeded secret
-# so Terraform doesn't try to create-and-fail with "already exists". Verified
-# empirically (see plan's spike notes) that a for_each import block with a
-# FIXED (non-each-indexed) `to` address correctly toggles between "skip this
-# import entirely" (empty for_each) and "import this one resource" (single-
-# element for_each) -- Terraform does not require `to`/`id` to reference
-# each.key/each.value when for_each only ever yields 0 or 1 elements. Targets
-# master_non_self_service[0] specifically (see below) -- that resource's own
-# count is gated on the identical `local.self_service` condition, so the
-# import only ever fires exactly when that instance exists.
-import {
-  for_each = local.self_service ? [] : [1]
-  to       = azurerm_key_vault_secret.master_non_self_service[0]
-  id       = data.azurerm_key_vault_secret.db_credentials[0].id
-}
-
 # ── Self-service only: every value a fresh install needs that Terraform can
 # generate or derive for certain. Mirrors terraform-google-ekai's
 # modules/cicd/main.tf generation locals almost exactly -- Azure's
@@ -366,6 +349,11 @@ resource "azurerm_key_vault_secret" "master_self_service" {
 # argocd_admin_password_plain, ...) are preserved unchanged via merge(), no
 # manual re-entry needed on subsequent applies, no ignore_changes needed
 # since this never resets anything the client hasn't already set.
+#
+# The client seeds this secret before the first full apply, so it has to be
+# imported, not created. That import block is in
+# examples/self-deploy/root/main.tf rather than here: before Terraform 1.16,
+# import blocks only work in the root module.
 resource "azurerm_key_vault_secret" "master_non_self_service" {
   count        = local.self_service ? 0 : 1
   name         = var.secrets_name

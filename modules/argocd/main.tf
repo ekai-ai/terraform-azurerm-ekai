@@ -114,9 +114,10 @@ resource "helm_release" "argocd_image_updater" {
 }
 
 # AppProject/default is auto-created by ArgoCD with a finalizer.
-# Managing it here (force_conflicts = true) ensures Terraform destroys it
-# before Helm uninstall, so the finalizer is gone before controllers are killed
-# and the argocd namespace terminates cleanly.
+# Managing it here ensures Terraform destroys it before Helm uninstall, so the
+# finalizer is gone before controllers are killed and the argocd namespace
+# terminates cleanly. No force_conflicts: it only does anything with
+# server_side_apply, and alekc/kubectl v3 fails the plan if it's set without it.
 resource "kubectl_manifest" "argocd_default_project" {
   yaml_body = yamlencode({
     apiVersion = "argoproj.io/v1alpha1"
@@ -132,8 +133,7 @@ resource "kubectl_manifest" "argocd_default_project" {
       clusterResourceWhitelist = [{ group = "*", kind = "*" }]
     }
   })
-  force_conflicts = true
-  depends_on      = [helm_release.argocd]
+  depends_on = [helm_release.argocd]
 }
 
 # DNS A record + wait_for_dns for argocd are NOT created here. The wildcard

@@ -20,10 +20,6 @@ variable "resource_group_name" {
   type = string
 }
 
-variable "region" {
-  type = string
-}
-
 # --- Key Vault (sourced from the cluster submodule's output) ---
 variable "key_vault_id" {
   type = string
@@ -66,19 +62,9 @@ variable "backend_db_name" {
   type = string
 }
 
-variable "acr_login_server" {
-  description = "ACR login server (sourced from the cluster submodule's output) — Redis/MinIO image registry override."
-  type        = string
-}
-
-variable "mirrored_image_tags" {
-  description = "Map of mirrored image keys → dest_tag (sourced from the cluster submodule's output)."
-  type        = map(string)
-}
-
 variable "secrets_name" {
   type        = string
-  description = "Master Key Vault secret name. Self-service: Terraform creates it fresh. Non-self-service: client pre-populates DB creds + argocd_admin_password_plain + github_token/username/email; this submodule reads those, deploys the platform, then writes back the merged secret with platform-derived values (DATABASE_URL, REDIS_*, MINIO_*) added."
+  description = "Master Key Vault secret name. Self-service: Terraform creates it fresh. Non-self-service: client pre-populates DB creds + argocd_admin_password_plain + github_token/username/email; this submodule reads those, deploys the platform, then writes back the merged secret with platform-derived values (DATABASE_URL, REDIS_*) added."
 }
 
 variable "cicd_provider" {
@@ -202,8 +188,9 @@ variable "neo4j_storage_size" {
 }
 
 variable "neo4j_storage_class" {
-  type    = string
-  default = "managed-premium"
+  description = "StorageClass for the Neo4j data volume. null uses AKS's default StorageClass. A PVC's class can't change after it's created, so don't set this on an install that already has one."
+  type        = string
+  default     = null
 }
 
 variable "neo4j_memory_request" {
@@ -224,61 +211,6 @@ variable "neo4j_cpu_request" {
 variable "neo4j_cpu_limit" {
   type    = string
   default = "2"
-}
-
-# --- MinIO ---
-variable "minio_namespace" {
-  type    = string
-  default = "minio"
-}
-
-variable "minio_chart_version" {
-  type    = string
-  default = "17.0.21"
-}
-
-variable "minio_persistence_size" {
-  type = string
-}
-
-variable "minio_storage_class" {
-  type    = string
-  default = "managed-premium"
-}
-
-variable "minio_replicas" {
-  type    = number
-  default = 4
-}
-
-variable "minio_mode" {
-  type    = string
-  default = "distributed"
-}
-
-variable "minio_default_buckets" {
-  type    = list(string)
-  default = ["ekai-files"]
-}
-
-variable "minio_host" {
-  type = string
-}
-
-variable "minio_enable_ingress" {
-  type    = bool
-  default = true
-}
-
-variable "minio_resources" {
-  type = object({
-    requests = map(string)
-    limits   = map(string)
-  })
-  default = {
-    requests = { cpu = "100m", memory = "256Mi" }
-    limits   = { cpu = "1", memory = "1Gi" }
-  }
 }
 
 variable "secret_value_overrides" {

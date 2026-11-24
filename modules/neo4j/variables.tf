@@ -20,9 +20,9 @@ variable "storage_size" {
 }
 
 variable "storage_class" {
-  description = "Unused -- this module uses mode = \"defaultStorageClass\" (AKS's default StorageClass), same as terraform-google-ekai's copy of this module. Kept for interface parity with AWS/GCP's copies."
+  description = "StorageClass for the Neo4j data volume. null uses AKS's default StorageClass. A PVC's class can't change after it's created, so don't set this on an install that already has one."
   type        = string
-  default     = "managed-premium"
+  default     = null
 }
 
 variable "memory_request" {

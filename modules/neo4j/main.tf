@@ -1,12 +1,10 @@
 # Ported verbatim from terraform-google-ekai's modules/neo4j (per explicit
 # instruction to match GCP exactly) -- Neo4j Community Edition via the
-# official Helm chart, in-cluster only (no ingress). Uses
-# `volumes.data.mode = "defaultStorageClass"` (not "dynamic" +
-# storageClassName like terraform-aws-ekai's copy of this module) so it just
-# uses whatever StorageClass AKS treats as default, same as GCP does with
-# GKE's default StorageClass -- var.storage_class is declared for interface
-# parity with AWS/GCP's copies of this module but is unused here, same as
-# it's unused in GCP's own copy.
+# official Helm chart, in-cluster only (no ingress). With var.storage_class
+# left null the data volume uses AKS's default StorageClass (the chart's
+# "defaultStorageClass" mode), which is what every install so far has used;
+# setting it switches to "dynamic" mode with that class, like
+# terraform-aws-ekai's copy of this module.
 resource "random_password" "neo4j" {
   count   = var.neo4j_password == "" ? 1 : 0
   length  = 24
@@ -38,13 +36,16 @@ resource "helm_release" "neo4j" {
       edition  = "community"
     }
 
+    # jsonencode/jsondecode because the two branches are objects with
+    # different attributes, which a plain conditional can't return.
     volumes = {
-      data = {
-        mode = "defaultStorageClass"
-        defaultStorageClass = {
-          requests = { storage = var.storage_size }
-        }
-      }
+      data = jsondecode(var.storage_class == null ? jsonencode({
+        mode                = "defaultStorageClass"
+        defaultStorageClass = { requests = { storage = var.storage_size } }
+        }) : jsonencode({
+        mode    = "dynamic"
+        dynamic = { storageClassName = var.storage_class, requests = { storage = var.storage_size } }
+      }))
     }
 
     resources = {

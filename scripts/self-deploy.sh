@@ -408,11 +408,43 @@ fi
 # examples/self-deploy/{root,cicd} — the repo root and cicd/ directories are
 # pure Terraform modules now (no backend block of their own; see
 # providers.tf / cicd/providers.tf), so they can't be applied directly.
+# One-time upgrade for installs that predate MinIO's removal. The self-service
+# app secret is created once and never overwritten (lifecycle.ignore_changes in
+# modules/platform), so those installs still have USE_MINIO=true plus MINIO_*
+# and EKAI_BUCKET pointing at a service that no longer exists. A no-op on fresh
+# installs and once USE_MINIO is "false". Warns instead of failing the deploy:
+# file storage is unavailable either way.
+remove_legacy_minio_settings() {
+  local vault="$1" name="$2" secret_json secret_file
+  if ! secret_json=$(az keyvault secret show --vault-name "${vault}" --name "${name}" -o json 2>/dev/null); then
+    echo "⚠ Could not read the ${name} secret from ${vault} -- skipping the MinIO settings cleanup."
+    return 0
+  fi
+  [[ "$(jq -r '.value | fromjson | .USE_MINIO // empty' <<<"${secret_json}" 2>/dev/null)" == "true" ]] || return 0
+
+  echo "==> Removing leftover MinIO settings from the ${name} secret (MinIO is no longer deployed)..."
+  secret_file=$(mktemp)
+  chmod 600 "${secret_file}"
+  jq -c '.value | fromjson | del(.MINIO_ENDPOINT_URL, .MINIO_ACCESS_KEY, .MINIO_SECRET_ACCESS_KEY, .EKAI_BUCKET) | .USE_MINIO = "false"' <<<"${secret_json}" >"${secret_file}"
+  # A new secret version starts with no tags, which would show up as a tags
+  # diff on the next plan -- carry them over (positional params as the array:
+  # bash 3.2 on macOS has no mapfile and trips over empty arrays under set -u).
+  set --
+  while IFS= read -r tag; do set -- "$@" "${tag}"; done < <(jq -r '(.tags // {}) | to_entries[] | "\(.key)=\(.value)"' <<<"${secret_json}")
+  if az keyvault secret set --vault-name "${vault}" --name "${name}" --file "${secret_file}" --encoding utf-8 --content-type application/json --tags "$@" >/dev/null; then
+    echo "✓ MinIO settings removed."
+  else
+    echo "⚠ Could not update the ${name} secret. In ${vault}, delete MINIO_ENDPOINT_URL, MINIO_ACCESS_KEY, MINIO_SECRET_ACCESS_KEY and EKAI_BUCKET from it and set USE_MINIO to \"false\"."
+  fi
+  rm -f "${secret_file}"
+}
+
 echo
 echo "════════ terraform apply (bootstrap + cluster + platform) ════════"
 cd "${REPO_ROOT}/examples/self-deploy/root"
 terraform init -upgrade -reconfigure -backend-config="../../../env/backend-${ENV}.tfbackend"
 terraform apply -auto-approve -compact-warnings -var-file="../../../env/${ENV}.tfvars"
+remove_legacy_minio_settings "$(terraform output -raw key_vault_name)" "$(terraform output -raw secrets_name)"
 
 # ── DNS delegation — only when Terraform just created a NEW DNS zone.
 # Delegating dns_zone to Azure's nameservers at your registrar/parent zone is

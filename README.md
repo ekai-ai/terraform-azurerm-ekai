@@ -50,10 +50,11 @@ tables below apply to that one firewall, not just the cluster's.
 | `public.ecr.aws` | HTTPS 443 | The `ekai-saas` Helm chart + every app image |
 | `licensing.ekai.ai` | HTTPS 443 | Backend pod's own runtime license checks (not just the installer) |
 | `acme-v02.api.letsencrypt.org` | HTTPS 443 | cert-manager's wildcard cert issuance |
+| `api.github.com` | HTTPS 443 | GitHub code sync |
 
-Only if you fill in the optional GitHub-sync or AWS-SES placeholders in the
-customer secret: `api.github.com` (GitHub sync) or `email.<region>.amazonaws.com`
-(your own SES credentials) — skip both if you leave those `REPLACE_ME`.
+Only if you fill in the optional AWS-SES placeholders in the customer
+secret: `email.<region>.amazonaws.com` (your own SES credentials) — skip
+if you leave those `REPLACE_ME`.
 
 ## Deploy
 
